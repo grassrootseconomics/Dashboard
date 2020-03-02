@@ -2,9 +2,14 @@
 
 import os
 import psycopg2
+from datetime import datetime
+from datetime import timezone
+from datetime import timedelta
+
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 mpl.rcParams['figure.figsize'] = [15,10] # for square canvas
 mpl.rcParams['figure.subplot.left'] = 0
 mpl.rcParams['figure.subplot.bottom'] = 0
@@ -12,11 +17,11 @@ mpl.rcParams['figure.subplot.right'] = 1
 mpl.rcParams['figure.subplot.top'] = 1
 
 
+
+daysL = mdates.DateLocator()
+
 plt.style.use('seaborn-whitegrid')
 
-from datetime import datetime
-from datetime import timezone
-from datetime import timedelta
 
 
 class Date:
@@ -440,7 +445,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
         #if cumu:
             #y_values = cumulate(y_values)
 
-    fig, axs = plt.subplots(nrows=2, ncols=2)
+    fig, axs = plt.subplots(nrows=2, ncols=2, sharex=False)
 
     ax0, ax1, ax2, ax3 = axs.flatten()
 
@@ -448,6 +453,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
 
     ax0.set_title('Volume of Standard Transactions')
     ax0.plot(x_values, y_voltx_values["Sarafu"][::-1], 'o-', label='Volume')
+    ax0.xaxis.set_minor_locator(daysL)
 
     ax1.set_title('Volume Historgram')
     ax1.hist(voltx_data, bins=100, facecolor='g', alpha=0.75, label='Volume Hist')
@@ -457,6 +463,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
     ax2.plot(x_values, y_numtx_values["Sarafu"][::-1], 'o-', label='# Txns')
     ax2.plot(x_values, y_reg_values["Sarafu"][::-1], 'o-', label='# New Users')
     ax2.legend()
+    ax2.xaxis.set_minor_locator(daysL)
 
     ax3.set_title('Transaction Historgram')
     ax3.hist(numtx_data, bins=100, facecolor='g', alpha=0.75, label='Volume Hist')
