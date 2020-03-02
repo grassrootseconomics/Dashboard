@@ -358,9 +358,9 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
 
     tx_hash = []
 
-    #test
     numToday = 0
-    # get # of 1st trades
+
+    # get registered users
     for user_id, user_data in userData.items():
 
         created_date = user_data['created'].date()
@@ -373,31 +373,42 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
                     y_reg_values['Total'][idx] += 1  # tokens
                     y_reg_values[token_name][idx] += 1  # tokens
 
-    '''
-    numToday = 0
-    # get # of 1st trades
+
+    # get hist stats volume and number
     for tnsfer_acct__id, transactions in txnData.items():
 
-        first_transaction = Date().n_days_ahead(days=5)
+        sumTx = 0
+        sumVol = 0
+        addedTx = False
         for t in transactions:
             if t['transfer_subtype'] != 'STANDARD':
                 continue
-            if t['created'].date() < first_transaction:
-                first_transaction = t['created'].date()
 
-        # first_transaction = min([ for ]).date()  # Date.from_timestamp(min([int(t['created']) for t in transactions]))
-        if first_transaction >= start_date and first_transaction <= end_date:
-            idx = (end_date - first_transaction).days
-            if idx == 0:
-                print("today ", numToday)
-                numToday += 1
+            if t['sender_transfer_account_id'] != tnsfer_acct__id:
+                continue
+
+            date = t['created'].date()  # Date.from_timestamp(t['created'])
+            idx = (end_date - date).days
+
+            amount = t['_transfer_amount_wei']
+
             token_name = 'Sarafu'
 
             for sto in communities:
                 if token_name == sto:
-                    y_st_values['Total'][idx] += 1  # tokens
-                    y_st_values[token_name][idx] += 1  # tokens
-    '''
+                    sumVol += amount
+
+                    sumTx += 1
+
+                    addedTx = True
+
+        if addedTx:
+            if sumVol < 20000:
+                voltx_data.append(sumVol)
+            if sumTx < 100:
+                numtx_data.append(sumTx)
+
+
     # get volume and number
     for tnsfer_acct__id, transactions in txnData.items():
 
@@ -416,7 +427,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
             date = t['created'].date() #Date.from_timestamp(t['created'])
             idx = (end_date - date).days
 
-            amount = t['_transfer_amount_wei']
+            amount = int(t['_transfer_amount_wei'])
 
             token_name = 'Sarafu'
 
@@ -438,8 +449,8 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
         #if cumu:
             #y_values = cumulate(y_values)
 
-
-
+    print("<><><> VOL List: ", voltx_data)
+    print("<><><> NumTx List: ", numtx_data)
 
     fig, axs = plt.subplots(nrows=2, ncols=2)
 
@@ -451,7 +462,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
     ax0.plot(x_values, y_voltx_values["Sarafu"][::-1], 'o-', label='Volume')
 
     ax1.set_title('Volume Historgram')
-    ax1.hist(sumVol, 50, density=True, facecolor='g', alpha=0.75, label='Volume Hist')
+    ax1.hist(voltx_data, bins=100, facecolor='g', alpha=0.75, label='Volume Hist')
 
     ax2.set_title('Number of Standard Transactions & Number of New Users')
     ax2.plot(x_values, y_numtx_values["Sarafu"][::-1], 'o-', label='# Txns')
@@ -459,8 +470,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
     ax2.legend()
 
     ax3.set_title('Transaction Historgram')
-    ax3.hist(sumTx, 50, density=True, facecolor='g', alpha=0.75, label='Volume Hist')
-
+    ax3.hist(numtx_data, bins=100, facecolor='g', alpha=0.75, label='Volume Hist')
 
     plt.gcf().autofmt_xdate()
 
