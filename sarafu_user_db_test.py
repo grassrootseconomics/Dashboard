@@ -481,7 +481,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
     highlight_datetimes(x_values, weekend_indices, ax2)
     #highlight_datetimes(x_values, weekend_indices, axs[2])
 
-    plt.tight_layout()
+    #plt.tight_layout()
 
     fileName = "trade_txdata_" + str(days) + ".svg"
     plt.savefig(fileName)
