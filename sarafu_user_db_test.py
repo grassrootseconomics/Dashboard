@@ -454,6 +454,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
     ax0.set_title('Volume of Standard Transactions')
     ax0.plot(x_values, y_voltx_values["Sarafu"][::-1], 'o-', label='Volume')
     ax0.xaxis.set_minor_locator(daysL)
+    ax0.autofmt_xdate()
 
     ax1.set_title('Volume Historgram')
     ax1.hist(voltx_data, bins=100, facecolor='g', alpha=0.75, label='Volume Hist')
@@ -464,6 +465,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
     ax2.plot(x_values, y_reg_values["Sarafu"][::-1], 'o-', label='# New Users')
     ax2.legend()
     ax2.xaxis.set_minor_locator(daysL)
+    ax2.autofmt_xdate()
 
     ax3.set_title('Transaction Historgram')
     ax3.hist(numtx_data, bins=20, facecolor='g', alpha=0.75, label='Volume Hist')
