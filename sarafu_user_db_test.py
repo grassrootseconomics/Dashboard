@@ -18,7 +18,7 @@ mpl.rcParams['figure.subplot.top'] = 1
 
 
 
-daysL = mdates.DateLocator()
+daysL = mdates.DayLocator()
 
 plt.style.use('seaborn-whitegrid')
 
