@@ -440,9 +440,6 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
         #if cumu:
             #y_values = cumulate(y_values)
 
-    print("<><><> VOL List: ", voltx_data)
-    print("<><><> NumTx List: ", numtx_data)
-
     fig, axs = plt.subplots(nrows=2, ncols=2)
 
     ax0, ax1, ax2, ax3 = axs.flatten()
