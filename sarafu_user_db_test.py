@@ -390,7 +390,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
             date = t['created'].date()  # Date.from_timestamp(t['created'])
             idx = (end_date - date).days
 
-            amount = t['_transfer_amount_wei']
+            amount = int(t['_transfer_amount_wei'])
 
             token_name = 'Sarafu'
 
@@ -403,19 +403,15 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
                     addedTx = True
 
         if addedTx:
-            if sumVol < 20000:
+            if sumVol> 0 and sumVol < 20000:
                 voltx_data.append(sumVol)
-            if sumTx < 100:
+            if sumTx >0 and sumTx < 100:
                 numtx_data.append(sumTx)
 
 
     # get volume and number
     for tnsfer_acct__id, transactions in txnData.items():
 
-
-        sumTx = 0
-        sumVol = 0
-        addedTx = False
         for t in transactions:
             if t['id'] in tx_hash:
                 continue
@@ -435,17 +431,12 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
                 if token_name == sto:
                     y_voltx_values['Total'][idx] += amount  # tokens
                     y_voltx_values[token_name][idx] += amount  # tokens
-                    sumVol += amount
 
                     y_numtx_values['Total'][idx] += 1  # tokens
                     y_numtx_values[token_name][idx] += 1  # tokens
-                    sumTx += 1
 
                     addedTx = True
 
-        if addedTx:
-            voltx_data.append(sumVol)
-            numtx_data.append(sumTx)
         #if cumu:
             #y_values = cumulate(y_values)
 
