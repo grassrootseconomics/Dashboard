@@ -2,7 +2,16 @@
 
 import os
 import psycopg2
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
+mpl.rcParams['figure.figsize'] = [15,10] # for square canvas
+mpl.rcParams['figure.subplot.left'] = 0
+mpl.rcParams['figure.subplot.bottom'] = 0
+mpl.rcParams['figure.subplot.right'] = 1
+mpl.rcParams['figure.subplot.top'] = 1
+
+
 plt.style.use('seaborn-whitegrid')
 
 from datetime import datetime
