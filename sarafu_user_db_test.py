@@ -454,6 +454,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
 
     ax1.set_title('Volume Historgram')
     ax1.hist(voltx_data, bins=100, facecolor='g', alpha=0.75, label='Volume Hist')
+    ax1.xaxis.set_visible(True)
 
     ax2.set_title('Number of Standard Transactions & Number of New Users')
     ax2.plot(x_values, y_numtx_values["Sarafu"][::-1], 'o-', label='# Txns')
