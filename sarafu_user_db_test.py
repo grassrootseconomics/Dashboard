@@ -403,9 +403,9 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
                     addedTx = True
 
         if addedTx:
-            if sumVol> 0 and sumVol < 20000:
+            if sumVol> 0 and sumVol < 5000:
                 voltx_data.append(sumVol)
-            if sumTx >0 and sumTx < 100:
+            if sumTx >0 and sumTx < 20:
                 numtx_data.append(sumTx)
 
 
