@@ -471,7 +471,6 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
     ax3.set_title('Transaction Historgram')
     ax3.hist(numtx_data, bins=20, facecolor='g', alpha=0.75, label='Volume Hist')
 
-    plt.au.gcf().autofmt_xdate()
 
 
     # find to be highlighted areas, see functions
