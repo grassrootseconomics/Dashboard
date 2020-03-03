@@ -467,11 +467,9 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
     ax2.xaxis.set_minor_locator(daysL)
     #ax2.autofmt_xdate()
 
+    #branch
     ax3.set_title('Transaction Historgram')
     ax3.hist(numtx_data, bins=20, facecolor='g', alpha=0.75, label='Volume Hist')
-
-    plt.au.gcf().autofmt_xdate()
-
 
     # find to be highlighted areas, see functions
     weekend_indices = find_weekend_indices(x_values)
@@ -481,13 +479,12 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
     highlight_datetimes(x_values, weekend_indices, ax2)
     #highlight_datetimes(x_values, weekend_indices, axs[2])
 
-    #plt.tight_layout()
+    plt.tight_layout()
 
     fileName = "trade_txdata_" + str(days) + ".svg"
     plt.savefig(fileName)
 
     print("****num transactions svg saved to ", fileName)
-
 
 
 #return a list of every users transactions keyed by user
