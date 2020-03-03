@@ -5,6 +5,30 @@ import psycopg2
 from datetime import datetime
 from datetime import timezone
 from datetime import timedelta
+import getopt
+import sys
+
+
+# process input params
+opts, _ = getopt.getopt(sys.argv[1:], 'ah:u:', ['public'])
+
+start_date = None 
+end_date = None
+dbname=os.environ.get('DBNAME')
+dbuser=os.environ.get('DBUSER')
+dbpass=os.environ.get('DBUSER')
+
+
+for o, a in opts:
+    if o == '--public':
+        private=False
+    if o == '-a':
+        start_date = Date().n_days_ago(days=days_ago)
+        end_date = Date().today()
+    if o == '-h':
+        dbname=a
+    if o == '-u':
+        dbuser=a
 
 import matplotlib as mpl
 mpl.use('Agg')
@@ -668,26 +692,37 @@ def get_user_info(conn,private=False):
 
 
 ##############################################################################################
-dbname=os.environ.get('DBNAME')
-dbpass=os.environ.get('DBPASS')
-dbuser=os.environ.get('DBUSER')
 
-conn = psycopg2.connect(
-        f"""
-        dbname=postgres
-        user={dbuser}
-        host={dbname}
-        password={dbpass}
-        """)
+if dbpass == None:
+    conn = psycopg2.connect(
+            f"""
+            dbname=postgres
+            user={dbuser}
+            host={dbname}
+            """)
 
-eth_conn = psycopg2.connect(
-        f"""
-        dbname=eth_worker
-        user={dbuser}
-        host={dbname}
-        password={dbpass}
-        """)
+    eth_conn = psycopg2.connect(
+            f"""
+            dbname=eth_worker
+            user={dbuser}
+            host={dbname}
+            """)
+else:
+    conn = psycopg2.connect(
+            f"""
+            dbname=postgres
+            user={dbuser}
+            host={dbname}
+            password={dbpass}
+            """)
 
+    eth_conn = psycopg2.connect(
+            f"""
+            dbname=eth_worker
+            user={dbuser}
+            host={dbname}
+            password={dbpass}
+            """)
 
 tResult = get_txns_acct_txns(conn, eth_conn, start_date, end_date)
 txHeaders = tResult['headers']
