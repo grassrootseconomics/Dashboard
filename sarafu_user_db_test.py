@@ -16,7 +16,7 @@ start_date = None
 end_date = None
 dbname=os.environ.get('DBNAME')
 dbuser=os.environ.get('DBUSER')
-dbpass=os.environ.get('DBUSER')
+dbpass=os.environ.get('DBPASS')
 
 
 for o, a in opts:
