@@ -467,6 +467,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
     ax2.xaxis.set_minor_locator(daysL)
     #ax2.autofmt_xdate()
 
+    #branch
     ax3.set_title('Transaction Historgram')
     ax3.hist(numtx_data, bins=20, facecolor='g', alpha=0.75, label='Volume Hist')
 
