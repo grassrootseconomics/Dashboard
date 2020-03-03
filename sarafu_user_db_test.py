@@ -200,7 +200,7 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
                 spamwriterUser.writerow([str(user_data1[k]) for k in headersUser])
 
             c_idx = 0
-            chunks = 1000
+            chunks = 10000
             tx_hash = []
 
             for tnsfer_acct__id, transactions in txnData.items():
@@ -491,7 +491,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
 def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
 
     offset = 0
-    step = 1000
+    step = 10000
 
     rows_eth_all = []
 
@@ -528,7 +528,7 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
     txnDict = {}
     txDBheaders.extend(['token.name', 'token.address'])
     offset = 0
-    step = 1000
+    step = 10000
 
 
     while True:#rows_eth.len()>0:
