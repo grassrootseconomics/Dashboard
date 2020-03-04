@@ -8,46 +8,6 @@ from datetime import timedelta
 import getopt
 import sys
 
-
-# process input params
-opts, _ = getopt.getopt(sys.argv[1:], 'ah:u:', ['public'])
-
-start_date = None 
-end_date = None
-dbname=os.environ.get('DBNAME')
-dbuser=os.environ.get('DBUSER')
-dbpass=os.environ.get('DBPASS')
-
-
-for o, a in opts:
-    if o == '--public':
-        private=False
-    if o == '-a':
-        start_date = Date().n_days_ago(days=days_ago)
-        end_date = Date().today()
-    if o == '-h':
-        dbname=a
-    if o == '-u':
-        dbuser=a
-
-import matplotlib as mpl
-mpl.use('Agg')
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-mpl.rcParams['figure.figsize'] = [15,10] # for square canvas
-mpl.rcParams['figure.subplot.left'] = 0
-mpl.rcParams['figure.subplot.bottom'] = 0
-mpl.rcParams['figure.subplot.right'] = 1
-mpl.rcParams['figure.subplot.top'] = 1
-
-
-
-daysL = mdates.DayLocator()
-
-plt.style.use('seaborn-whitegrid')
-
-
-
 class Date:
     '''
     Class to handle dates that are timezone aware and the default
@@ -95,17 +55,62 @@ class DateTime:
             timestamp = int(timestamp)
         return datetime.fromtimestamp(timestamp, tz=cls.tz)
 
-#################################################################################################################
+
+
+# process input params
+opts, _ = getopt.getopt(sys.argv[1:], 'a:h:u:', ['public'])
+
+start_date = None 
+end_date = None
+dbname=os.environ.get('DBNAME')
+dbuser=os.environ.get('DBUSER')
+dbpass=os.environ.get('DBPASS')
+
 
 private=True
 
 days_ago = 30
-days_ago_str = str(days_ago)+"days"
-start_date = Date().n_days_ago(days=days_ago)
-end_date = Date().today()
+days_ago_str = None#str(days_ago)+"days"
+start_date = None#Date().n_days_ago(days=days_ago)
+end_date = None#Date().today()
 
 if start_date == None:
     days_ago_str = "all_time"
+
+
+for o, a in opts:
+    if o == '--public':
+        private=False
+    if o == '-a':
+        days_ago = int(a)
+        days_ago_str = str(days_ago) + "days"
+        start_date = Date().n_days_ago(days=days_ago)
+        end_date = Date().today()
+    if o == '-h':
+        dbname=a
+    if o == '-u':
+        dbuser=a
+
+import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+mpl.rcParams['figure.figsize'] = [15,10] # for square canvas
+mpl.rcParams['figure.subplot.left'] = 0
+mpl.rcParams['figure.subplot.bottom'] = 0
+mpl.rcParams['figure.subplot.right'] = 1
+mpl.rcParams['figure.subplot.top'] = 1
+
+
+
+daysL = mdates.DayLocator()
+
+plt.style.use('seaborn-whitegrid')
+
+
+
+#################################################################################################################
+
 
 
 GE_community_token_id_map = {
@@ -299,7 +304,7 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
 
                     spamwriterTx.writerow(rowString)
                     if indexR < 3:
-                        print(row_data)
+                        #print(row_data) #debug
                         indexR+=1
                     if c_idx >= chunks:
                         c_idx = 0
@@ -345,6 +350,29 @@ def highlight_datetimes(dates,indices, ax):
 
 def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=None):
 
+    days = 0
+    days_str = ""
+    if start_date == None:
+        earlyDate = Date().n_days_ahead(days=2)
+        lateDate = Date().n_days_ago(days=2000)
+        nend_date = Date().today()
+        for u, trans in txnData.items():
+            for t in trans:
+                if t['created'].date() < earlyDate:
+                    earlyDate = t['created'].date()
+                if t['created'].date() > lateDate:
+                    lateDate = t['created'].date()
+        start_date = earlyDate
+        end_date = lateDate
+        days = (end_date - start_date).days + 1
+        days_str = "all_time"
+
+    else:
+
+        days = (end_date - start_date).days + 1
+        days_str = str(days - 1)+"days"
+    fileName = "trade_txdata_" + days_str + ".svg"
+
     cumu = False
 
     communities = list()
@@ -360,7 +388,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
 
     x_values = [start_date + timedelta(days=x) for x in range(0, (end_date - start_date).days+1)]
 
-    days = (end_date - start_date).days+1
+
 
     voltx_data = []
     numtx_data = []
@@ -457,7 +485,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
             token_name = 'Sarafu'
 
             for sto in communities:
-                if token_name == sto:
+                if token_name == sto:# and idx in y_voltx_values['Total']:
                     y_voltx_values['Total'][idx] += amount  # tokens
                     y_voltx_values[token_name][idx] += amount  # tokens
 
@@ -505,7 +533,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
 
     plt.tight_layout()
 
-    fileName = "trade_txdata_" + str(days) + ".svg"
+
     plt.savefig(fileName)
 
     print("****num transactions svg saved to ", fileName)
@@ -647,7 +675,7 @@ def get_user_info(conn,private=False):
     cmd += " LEFT JOIN transfer_usage"
     cmd += " ON u.business_usage_id = transfer_usage.id"
 
-    print("\n"+cmd+"\n")
+    #print("\n"+cmd+"\n") #debug
     cur.execute(cmd)
     rows = cur.fetchall()
 
@@ -858,8 +886,9 @@ userHeaders.extend(['confidence'])
 
 generate_user_and_transaction_data_github_csv(txnData,userData,private=private)
 
-nstart_date = Date().n_days_ago(days=days_ago)
-nend_date = Date().today()
+nstart_date = start_date
+nend_date = end_date
+
 
 generate_transaction_data_svg(txnData, userData, nstart_date, nend_date)
 
@@ -875,7 +904,7 @@ if True:
         writerT = csv.writer(csvfile)
 
         writerT.writerow(userHeaders)
-        print(userHeaders)
+        #print(userHeaders) #debug
         for user_id, user_data in userData.items():
             writerT.writerow([str(user_data.get(attr, '')).strip('"') for attr in userHeaders])
 
