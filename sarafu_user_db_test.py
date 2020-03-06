@@ -77,7 +77,7 @@ end_date = None#Date().today()
 if start_date == None:
     days_ago_str = "all_time"
 
-
+#to run: python3 sarafu_user_db_test.py -a 30 -h localhost -u read_only
 for o, a in opts:
     if o == '--public':
         private=False
@@ -843,9 +843,19 @@ for user, data in userData.items():
     if stotal_unique_txns_out_atleast >0:
         userPercentage = data['sunique_out_at']/stotal_unique_txns_out_atleast
     tDict = data
-    tDict.update({'ptot_out_unique_at':userPercentage})
+    tDict.update({'ptot_out_unique_at': userPercentage})
+    userData[user] = tDict
+
+
+    max_out = 0
+
+    max_out = min([int(data['_balance_wei']/2),data['svol_out']])
+    tDict = data
+    tDict.update({'max_out':max_out})
     userData[user]=tDict
+
 userHeaders.extend(['ptot_out_unique_at'])
+userHeaders.extend(['max_out'])
 
 
 userConfidenceDict = {}
