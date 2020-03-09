@@ -292,7 +292,9 @@ def displayGraphs(mainGraph, graphs,userData,private=False,days_str=""):
         n += 1
         axs_iter += 1
         #plt.show(block=True)
-    fileName =  "network_graph_" + str(n-1) + "_"+days_str+".svg"
+    fileName = "network_graph_public_" + str(n - 1) + "_" + days_str + ".svg"
+    if private == True:
+        fileName = "network_graph_private_" + str(n - 1) + "_" + days_str + ".svg"
     print("****saved network viz ", fileName)
     plt.savefig(fileName, bbox_inches='tight')
 
