@@ -4,7 +4,7 @@ from toolkit import Date, DateTime
 import networkx as nx
 import random
 import math
-import pickle
+
 
 rcParams.update({'figure.autolayout': True})
 scale = 300.0
