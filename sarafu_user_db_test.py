@@ -2,62 +2,11 @@
 
 import os
 import psycopg2
-from datetime import datetime
-from datetime import timezone
-from datetime import timedelta
 import getopt
 import sys
-
-#test23
-class Date:
-    '''
-    Class to handle dates that are timezone aware and the default
-    timezone is UTC+3 (Kenya)
-    '''
-    tz = timezone(timedelta(hours=3))
-
-    @classmethod
-    def today(cls):
-        return datetime.now(tz=cls.tz).date()
-
-    @classmethod
-    def n_days_ago(cls, days):
-        return datetime.now(tz=cls.tz).date() - timedelta(days=days)
-
-    @classmethod
-    def n_days_ahead(cls, days):
-        return datetime.now(tz=cls.tz).date() + timedelta(days=days)
-
-    @staticmethod
-    def from_plotly(plotly_rep):
-        return datetime.strptime(plotly_rep, "%Y-%m-%d").date()
-
-    @classmethod
-    def from_timestamp(cls, timestamp):
-        if isinstance(timestamp, str):
-            timestamp = int(timestamp)
-        return datetime.fromtimestamp(timestamp, tz=cls.tz).date()
-
-
-class DateTime:
-    '''
-    Class to handle dates that are timezone aware and the default
-    timezone is UTC+3 (Kenya and Israel)
-    '''
-    tz = timezone(timedelta(hours=3))
-
-    @classmethod
-    def now(cls):
-        return datetime.now(tz=cls.tz)
-
-    @classmethod
-    def from_timestamp(cls, timestamp):
-        if isinstance(timestamp, str):
-            timestamp = int(timestamp)
-        return datetime.fromtimestamp(timestamp, tz=cls.tz)
-
-
-
+from toolkit import Date
+from datetime import timedelta
+from network_viz import output_Network_Viz
 # process input params
 opts, _ = getopt.getopt(sys.argv[1:], 'a:h:u:', ['public'])
 
@@ -107,8 +56,6 @@ mpl.rcParams['figure.subplot.top'] = 1
 daysL = mdates.DayLocator()
 
 plt.style.use('seaborn-whitegrid')
-
-
 
 #################################################################################################################
 
@@ -242,12 +189,11 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
                     sender_user_id = t['sender_user_id']
                     recipient_user_id = t['recipient_user_id']
 
-                    if sender_user_id==None:
+                    if sender_user_id == None:
                         sender_user_id = 1
 
-                    if recipient_user_id==None:
+                    if recipient_user_id == None:
                         recipient_user_id = 1
-
 
                     row_data = {'timeset': t['created']}
 
@@ -273,14 +219,12 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
                             row_data['s_first_name'] = userData[sender_user_id]['first_name']
                             row_data['s_last_name'] = userData[sender_user_id]['last_name']
                             row_data['s_phone'] = userData[sender_user_id]['_phone']
-                            row_data['s_directory'] = userData[sender_user_id].get('bio','').strip('"')
+                            row_data['s_directory'] = userData[sender_user_id].get('bio', '').strip('"')
                             row_data['s_location'] = userData[sender_user_id]['_location']
                             row_data['t_location'] = userData[recipient_user_id]['_location']
-                            row_data['s_gender'] = userData[sender_user_id].get('gender','').strip('"')
-                        row_data['s_comm_tkn'] = userData[sender_user_id]['default_currency']
-                        row_data['s_business_type'] = userData[sender_user_id]['_name']
-
-
+                            row_data['s_gender'] = userData[sender_user_id].get('gender', '').strip('"')
+                    row_data['s_comm_tkn'] = userData[sender_user_id]['default_currency']
+                    row_data['s_business_type'] = userData[sender_user_id]['_name']
 
                     row_data['target'] = userData[recipient_user_id]['blockchain_address']
                     if True:
@@ -498,6 +442,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
         #if cumu:
             #y_values = cumulate(y_values)
 
+    plt.figure(1)
     fig, axs = plt.subplots(nrows=2, ncols=2, sharex=False)
 
     ax0, ax1, ax2, ax3 = axs.flatten()
@@ -536,7 +481,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
 
 
     plt.savefig(fileName)
-
+    plt.close()
     print("****num transactions svg saved to ", fileName)
 
 
@@ -550,10 +495,9 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
 
     while True:#rows_eth.len()>0:
 
-
         cmd_eth = "SELECT task.uuid, tran.hash FROM blockchain_transaction as tran"
-        cmd_eth+= " INNER JOIN blockchain_task as task on task.id = tran.blockchain_task_id"
-        cmd_eth+= " WHERE tran._status = 'SUCCESS' ORDER BY tran.id LIMIT " + str(step) +" OFFSET "+ str(offset)
+        cmd_eth += " INNER JOIN blockchain_task as task on task.id = tran.blockchain_task_id"
+        cmd_eth += " WHERE tran._status = 'SUCCESS' ORDER BY tran.id LIMIT " + str(step) + " OFFSET " + str(offset)
 
         cur_eth = eth_conn.cursor()
         cur_eth.execute(cmd_eth)
@@ -901,10 +845,6 @@ nstart_date = start_date
 nend_date = end_date
 
 
-generate_transaction_data_svg(txnData, userData, nstart_date, nend_date)
-
-
-
 if True:
 
     import csv
@@ -920,5 +860,5 @@ if True:
             writerT.writerow([str(user_data.get(attr, '')).strip('"') for attr in userHeaders])
 
 
-
-
+generate_transaction_data_svg(txnData, userData, nstart_date, nend_date)
+output_Network_Viz(txnData, userData,nstart_date, nend_date,private)
