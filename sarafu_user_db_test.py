@@ -20,9 +20,9 @@ dbpass=os.environ.get('DBPASS')
 private=True
 
 days_ago = 30
-days_ago_str = None#str(days_ago)+"days"
-start_date = None#Date().n_days_ago(days=days_ago)
-end_date = None#Date().today()
+days_ago_str = None#"Feb"
+start_date = None#Date().n_days_ago(days=22+31)
+end_date = None#Date().n_days_ago(days=(22))
 
 if start_date == None:
     days_ago_str = "all_time"
@@ -31,7 +31,7 @@ if start_date == None:
 for o, a in opts:
     if o == '--public':
         private=False
-    if o == '-a':
+    if o == '-a' and start_date == None:
         days_ago = int(a)
         days_ago_str = str(days_ago) + "days"
         start_date = Date().n_days_ago(days=days_ago)
@@ -293,6 +293,11 @@ def highlight_datetimes(dates,indices, ax):
         ax.axvspan(dates[indices[i]], dates[indices[i] + 1], facecolor='blue', edgecolor='none', alpha=.2)
         i += 1
 
+#The goal here is to identify people whoa re sending to chamas (possibly put this as a filter inside the User table)
+def generate_chama_data(txnData, userData, start_date=None, end_date=None):
+
+    return None
+
 def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=None):
 
     days = 0
@@ -550,7 +555,10 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
                     if r in hashDict.keys():
                         r = hashDict[r]
                     else:
-                        r = "no hash found "+r
+                        if r is not None:
+                            r = "no hash found " + r
+                        r = "no hash found "
+
                 if h == 'created' and start_date != None and end_date != None:
                     #print(r) #2020-01-25 19:13:17.731529
                     if r.date() > end_date or r.date() <start_date:

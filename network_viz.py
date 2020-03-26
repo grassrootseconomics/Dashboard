@@ -437,8 +437,8 @@ def output_Network_Viz(txnData, userData, start_date = None, end_date=None,priva
             #print(len(list(sub_graph))," sub_graph:",end='')
             print_graphs.append(sub_graph)
             #for usr in sub_graph:
-            #    print(userData[usr].get('first_name', '')+"_"+userData[usr].get('last_name', ''))
-            #    print(" ")
+            #    print(userData[usr].get('first_name', '')+", "+userData[usr].get('last_name', '')+", "+userData[usr].get('_phone', '')+", "+userData[usr].get('bio', '').strip('"')+" ",end='')
+            #print(" ")
         if len(list(sub_graph)) > size_of_largest:
             size_of_largest = len(list(sub_graph))
             largest_sub_graph = list(sub_graph)
