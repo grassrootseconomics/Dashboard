@@ -326,7 +326,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
     cumu = False
 
     communities = list()
-    token_names = ['Sarafu']
+    token_names = ['STANDARD','DISBURSEMENT','AGENT_OUT','RECLAMATION']
     idx = 1
     communities.insert(0, 'Total')
     for to in token_names:
@@ -373,7 +373,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
         created_date = user_data['created'].date()
         if created_date >= start_date and created_date <= end_date:
             idx = (end_date - created_date).days
-            token_name = 'Sarafu'
+            token_name = 'STANDARD'
 
             for sto in communities:
                 if token_name == sto:
@@ -383,11 +383,15 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
 
     # get hist stats volume and number
     for tnsfer_acct__id, transactions in txnData.items():
-
         sumTx = 0
         sumVol = 0
+
+
         addedTx = False
+        type_std = True
         for t in transactions:
+            #token_name = t['transfer_subtype']
+            token_name = 'STANDARD'
             if t['transfer_subtype'] != 'STANDARD':
                 continue
 
@@ -399,7 +403,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
 
             amount = int(t['_transfer_amount_wei'])
 
-            token_name = 'Sarafu'
+
 
             for sto in communities:
                 if token_name == sto:
@@ -410,7 +414,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
                     addedTx = True
 
         if addedTx:
-            if sumVol> 0 and sumVol < 5000:
+            if sumVol> 0 and sumVol < 2000:
                 voltx_data.append(sumVol)
             if sumTx >0 and sumTx < 20:
                 numtx_data.append(sumTx)
@@ -424,15 +428,20 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
                 continue
             tx_hash.append(t['id'])
 
-            if t['transfer_subtype'] != 'STANDARD':
-                continue
+            token_name = t['transfer_subtype']
+            if token_name not in token_names:
+                token_names.append(token_name)
+            #token_name = 'STANDARD'
+            #if t['transfer_subtype'] != 'STANDARD':
+                #print(t['transfer_subtype'])
+                #continue
 
             date = t['created'].date() #Date.from_timestamp(t['created'])
             idx = (end_date - date).days
 
             amount = int(t['_transfer_amount_wei'])
 
-            token_name = 'Sarafu'
+
 
             for sto in communities:
                 if token_name == sto:# and idx in y_voltx_values['Total']:
@@ -454,25 +463,29 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
 
     #df = df[::-1]
 
-    ax0.set_title('Volume of Standard Transactions')
-    ax0.plot(x_values, y_voltx_values["Sarafu"][::-1], 'o-', label='Volume')
+    ax0.set_title('Transaction Volume')
+    for tname in token_names:
+        if tname != 'RECLAMATION':
+            ax0.plot(x_values, y_voltx_values[tname][::-1], 'o-', label=tname)
+        #ax0.plot(x_values, y_voltx_values["DISBURSEMENT"][::-1], 'o-', label='Volume')
+    ax0.legend()
     ax0.xaxis.set_minor_locator(daysL)
     #ax0.autofmt_xdate()
 
     ax1.set_title('Volume Historgram')
-    ax1.hist(voltx_data, bins=100, facecolor='g', alpha=0.75, label='Volume Hist')
+    ax1.hist(voltx_data, bins=50, facecolor='g', alpha=0.75, label='Volume Hist')
     ax1.xaxis.set_visible(True)
 
     ax2.set_title('Number of Standard Transactions & Number of New Users')
-    ax2.plot(x_values, y_numtx_values["Sarafu"][::-1], 'o-', label='# Txns')
-    ax2.plot(x_values, y_reg_values["Sarafu"][::-1], 'o-', label='# New Users')
+    ax2.plot(x_values, y_numtx_values["STANDARD"][::-1], 'o-', label='# Txns')
+    ax2.plot(x_values, y_reg_values["STANDARD"][::-1], 'o-', label='# New Users')
     ax2.legend()
     ax2.xaxis.set_minor_locator(daysL)
     #ax2.autofmt_xdate()
 
     #branch
     ax3.set_title('Transaction Historgram')
-    ax3.hist(numtx_data, bins=20, facecolor='g', alpha=0.75, label='Volume Hist')
+    ax3.hist(numtx_data, bins=50, facecolor='g', alpha=0.75, label='Volume Hist')
 
     # find to be highlighted areas, see functions
     weekend_indices = find_weekend_indices(x_values)
@@ -494,7 +507,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
 def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
 
     offset = 0
-    step = 10000
+    step = 2000
 
     rows_eth_all = []
 
@@ -530,7 +543,7 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
     txnDict = {}
     txDBheaders.extend(['token.name', 'token.address'])
     offset = 0
-    step = 10000
+    step = 2000
 
 
     while True:#rows_eth.len()>0:
