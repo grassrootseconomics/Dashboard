@@ -34,7 +34,7 @@ dbuser=os.environ.get('DBUSER')
 
 conn = psycopg2.connect(
         f"""
-        dbname=postgres
+        dbname=sarafu_app
         user={dbuser}
         host={dbname}
         """)
