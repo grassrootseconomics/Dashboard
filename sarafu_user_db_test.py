@@ -725,7 +725,7 @@ def get_user_info(conn,private=False):
 if dbpass == None:
     conn = psycopg2.connect(
             f"""
-            dbname=postgres
+            dbname=sarafu_app
             user={dbuser}
             host={dbname}
             """)
@@ -739,7 +739,7 @@ if dbpass == None:
 else:
     conn = psycopg2.connect(
             f"""
-            dbname=postgres
+            dbname=sarafu_app
             user={dbuser}
             host={dbname}
             password={dbpass}
