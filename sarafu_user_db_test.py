@@ -8,7 +8,7 @@ from toolkit import Date
 from datetime import timedelta
 from network_viz import output_Network_Viz
 # process input params
-opts, _ = getopt.getopt(sys.argv[1:], 'a:h:u:', ['public'])
+opts, _ = getopt.getopt(sys.argv[1:], 'a:h:u:p:', ['public'])
 
 start_date = None 
 end_date = None
@@ -39,7 +39,9 @@ for o, a in opts:
     if o == '-h':
         dbname=a
     if o == '-u':
-        dbuser=a
+        dbuser = a
+    if o == '-p':
+        dbpass=a
 
 import matplotlib as mpl
 mpl.use('Agg')
@@ -690,7 +692,7 @@ def get_user_info(conn,private=False):
 if dbpass == None:
     conn = psycopg2.connect(
             f"""
-            dbname=postgres
+            dbname=sarafu_app
             user={dbuser}
             host={dbname}
             """)
@@ -704,7 +706,7 @@ if dbpass == None:
 else:
     conn = psycopg2.connect(
             f"""
-            dbname=postgres
+            dbname=sarafu_app
             user={dbuser}
             host={dbname}
             password={dbpass}
