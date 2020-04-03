@@ -517,7 +517,8 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
 
         cmd_eth = "SELECT task.uuid, tran.hash FROM blockchain_transaction as tran"
         cmd_eth += " INNER JOIN blockchain_task as task on task.id = tran.blockchain_task_id"
-        cmd_eth += " WHERE tran._status = 'SUCCESS' ORDER BY tran.id LIMIT " + str(step) + " OFFSET " + str(offset)
+        #cmd_eth += " WHERE tran._status = 'SUCCESS' ORDER BY tran.id LIMIT " + str(step) + " OFFSET " + str(offset)
+        cmd_eth += " WHERE tran.status_text = 'SUCCESS' ORDER BY tran.id LIMIT " + str(step) + " OFFSET " + str(offset)
 
         cur_eth = eth_conn.cursor()
         cur_eth.execute(cmd_eth)
