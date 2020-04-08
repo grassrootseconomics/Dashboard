@@ -568,12 +568,16 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
                     r = r/ 10 ** 18
 
                 if h == 'blockchain_task_uuid':
+                    br = r
                     if r in hashDict.keys():
                         r = hashDict[r]
+                        if r== None:
+                            r = "Found hash of None for uuid = " + br
                     else:
                         if r is not None:
-                            r = "no hash found " + r
-                        r = "no hash found "
+                            r = "no hash found " + br
+                        else:
+                            r = "no hash found and uuid = None"
 
                 if h == 'created' and start_date != None and end_date != None:
                     #print(r) #2020-01-25 19:13:17.731529
@@ -658,7 +662,7 @@ def get_user_info(conn,private=False):
         uDict = {}
         for h, r in zip(userDBheaders,row):
             if h == '_balance_wei':
-                r = r/ 10 ** 18
+                r = r / 10 ** 18
             uDict[h]=r
         userDict[uDict['id']]=uDict
 
