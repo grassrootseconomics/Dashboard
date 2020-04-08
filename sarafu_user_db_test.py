@@ -510,31 +510,92 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
 
     offset = 0
     step = 2000
-
-    rows_eth_all = []
-
-    while True:#rows_eth.len()>0:
-
-        cmd_eth = "SELECT task.uuid, tran.hash FROM blockchain_transaction as tran"
-        cmd_eth += " INNER JOIN blockchain_task as task on task.id = tran.blockchain_task_id"
-        #cmd_eth += " WHERE tran._status = 'SUCCESS' ORDER BY tran.id LIMIT " + str(step) + " OFFSET " + str(offset)
-        cmd_eth += " WHERE task.status_text = 'SUCCESS' ORDER BY tran.id LIMIT " + str(step) + " OFFSET " + str(offset)
-
-        cur_eth = eth_conn.cursor()
-        cur_eth.execute(cmd_eth)
-        rows_eth = cur_eth.fetchall()
-
-        if len(rows_eth) ==0:
-            break
-
-        print("eth bulk offset: "+ str(offset)+" results "+ str(len(rows_eth)))
-        rows_eth_all+=rows_eth
-        offset+=step
-
-
+    get_hashes = False
     hashDict = {}
-    for row in rows_eth_all:
-        hashDict[row[0]]=row[1]
+    if get_hashes == True:
+        rows_eth_trans_all = []
+        rows_eth_task_all = []
+
+        while True:  # rows_eth.len()>0:
+
+            # cmd_eth = "SELECT DISTINCT ON(blockchain_task.id) blockchain_task.uuid, blockchain_transaction.hash"
+            # cmd_eth += " FROM blockchain_task INNER JOIN blockchain_transaction ON"
+            # cmd_eth += " blockchain_task.id = blockchain_transaction.blockchain_task_id"
+            # cmd_eth += " WHERE blockchain_transaction._status = 'SUCCESS'"
+            # cmd_eth += " ORDER BY blockchain_transaction.id LIMIT " + str(step) + " OFFSET " + str(offset)
+
+            cmd_eth = "SELECT tran.blockchain_task_id, tran.hash, tran.updated FROM blockchain_transaction as tran"
+            cmd_eth += " WHERE tran._status = 'SUCCESS' ORDER BY tran.id LIMIT " + str(step) + " OFFSET " + str(offset)
+
+            # cmd_eth = "SELECT task.uuid, tran.hash FROM blockchain_transaction as tran"
+            # cmd_eth += " INNER JOIN blockchain_task as task on task.id = tran.blockchain_task_id"
+            # cmd_eth += " WHERE task.status_text = 'SUCCESS' ORDER BY tran.id LIMIT " + str(step) + " OFFSET " + str(offset)
+
+            cur_eth = eth_conn.cursor()
+            cur_eth.execute(cmd_eth)
+            rows_eth = cur_eth.fetchall()
+
+            if len(rows_eth) == 0:
+                break
+
+            #print("eth bulk offset: " + str(offset) + " results " + str(len(rows_eth)))
+            rows_eth_trans_all += rows_eth
+            offset += step
+
+
+
+        offset = 0
+        step = 2000
+
+        while True:  #get task uuid blockchain_taks
+
+            # cmd_eth = "SELECT DISTINCT ON(blockchain_task.id) blockchain_task.uuid, blockchain_transaction.hash"
+            # cmd_eth += " FROM blockchain_task INNER JOIN blockchain_transaction ON"
+            # cmd_eth += " blockchain_task.id = blockchain_transaction.blockchain_task_id"
+            # cmd_eth += " WHERE blockchain_transaction._status = 'SUCCESS'"
+            # cmd_eth += " ORDER BY blockchain_transaction.id LIMIT " + str(step) + " OFFSET " + str(offset)
+
+            cmd_eth = "SELECT task.id, task.uuid FROM blockchain_task as task"
+            cmd_eth += " WHERE task.status_text = 'SUCCESS' ORDER BY task.id LIMIT " + str(step) + " OFFSET " + str(offset)
+
+            # cmd_eth = "SELECT task.uuid, tran.hash FROM blockchain_transaction as tran"
+            # cmd_eth += " INNER JOIN blockchain_task as task on task.id = tran.blockchain_task_id"
+            # cmd_eth += " WHERE task.status_text = 'SUCCESS' ORDER BY tran.id LIMIT " + str(step) + " OFFSET " + str(offset)
+
+            cur_eth = eth_conn.cursor()
+            cur_eth.execute(cmd_eth)
+            rows_eth = cur_eth.fetchall()
+
+            if len(rows_eth) == 0:
+                break
+
+            #print("eth bulk offset: " + str(offset) + " results " + str(len(rows_eth)))
+            rows_eth_task_all += rows_eth
+
+            offset += step
+
+
+        print(" ><><><>TESTaa")
+        for rows_task in rows_eth_task_all:
+            amatch = False
+            aMatchDate = None
+            #print(" ")
+            #print(" ><><><>TEST")
+            for rows_trans in rows_eth_trans_all:
+                #print(rows_task[0], rows_trans[0])
+                if rows_task[0] == rows_trans[0]:
+
+                    if amatch == True:
+                        print("Found a match: (",rows_task[0],") ", rows_trans[2], aMatchDate)
+                        if rows_trans[2].date() > aMatchDate.date():
+                            hashDict[rows_task[1]] = rows_trans[1]
+                    else:
+                        hashDict[rows_task[1]] = rows_trans[1]
+                        amatch = True
+                        aMatchDate = rows_trans[2]
+
+        #for row in rows_eth_all:
+        #    hashDict[row[0]] = row[1]
 
     txDBheaders = ['id','created','sender_transfer_account_id','recipient_transfer_account_id','sender_user_id','recipient_user_id',
                    '_transfer_amount_wei','transfer_type','transfer_subtype','transfer_use','token_id', 'blockchain_task_uuid',
