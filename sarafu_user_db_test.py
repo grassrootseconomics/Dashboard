@@ -4,6 +4,8 @@ import os
 import psycopg2
 import getopt
 import sys
+import csv
+import time
 from toolkit import Date
 from datetime import timedelta
 from network_viz import output_Network_Viz
@@ -88,7 +90,7 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
     headersUserPriv.extend(['svol_in','svol_out','stxns_in','stxns_out','sunique_in','sunique_out'])
 
 
-    headersUserPub = ['id', 'start', 'label', 'comm_tkn',
+    headersUserPub = ['id', 'start', 'label', 'gender', 'location',
                        'business_type', 'bal', 'xDAI_blockchain_address','confidence']
 
     headersUserPub.extend(['ovol_in','ovol_out','otxns_in','otxns_out','ounique_in','ounique_out'])
@@ -109,8 +111,8 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
     print("saving all transactions to: ", filenameTx)
     print("saving all users to: ", filenameUser)
 
-    import csv
-    import time
+
+
     timestr = time.strftime("%Y%m%d-%H%M%S")
 
     token_transactions = txnData#db_cache.select_token_transactions(start_date, end_date)
@@ -153,11 +155,12 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
                     user_data1['last_name'] = user_info['last_name']
                     user_data1['phone'] = user_info['_phone']
                     user_data1['directory'] = user_info.get('bio','').strip('"')
-                    user_data1['gender'] = user_info.get('gender','').strip('"')
                     user_data1['old_POA_blockchain_address'] = user_info.get('GE_wallet_address','').strip('"')
                     user_data1['old_POA_comm_tkn'] = user_info.get('GE_community_token_id','')
 
-                user_data1['location'] = "NA"#user_info['_location']
+
+                user_data1['gender'] = user_info.get('gender', '').strip('"')
+                user_data1['location'] = user_info['_location']
                 user_data1['business_type'] = user_info['_name']
                 user_data1['ovol_in'] = user_info['ovol_in']
                 user_data1['ovol_out'] = user_info['ovol_out']
@@ -222,9 +225,9 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
                             row_data['s_last_name'] = userData[sender_user_id]['last_name']
                             row_data['s_phone'] = userData[sender_user_id]['_phone']
                             row_data['s_directory'] = userData[sender_user_id].get('bio', '').strip('"')
-                            row_data['s_location'] = userData[sender_user_id]['_location']
-                            row_data['t_location'] = userData[recipient_user_id]['_location']
-                            row_data['s_gender'] = userData[sender_user_id].get('gender', '').strip('"')
+                    row_data['s_location'] = userData[sender_user_id]['_location']
+                    row_data['t_location'] = userData[recipient_user_id]['_location']
+                    row_data['s_gender'] = userData[sender_user_id].get('gender', '').strip('"')
                     row_data['s_comm_tkn'] = userData[sender_user_id]['default_currency']
                     row_data['s_business_type'] = userData[sender_user_id]['_name']
 
@@ -236,7 +239,7 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
                             row_data['t_last_name'] = userData[recipient_user_id]['last_name']
                             row_data['t_phone'] = userData[recipient_user_id]['_phone']
                             row_data['t_directory'] = userData[recipient_user_id].get('bio','').strip('"')
-                            row_data['t_gender'] = userData[recipient_user_id].get('gender','').strip('"')
+                        row_data['t_gender'] = userData[recipient_user_id].get('gender','').strip('"')
                         row_data['t_comm_tkn'] = userData[recipient_user_id]['default_currency']
                         row_data['t_business_type'] = userData[recipient_user_id]['_name']
 
@@ -673,20 +676,26 @@ def get_user_info(conn,private=False):
 
     cur = conn.cursor()
 
-    private_userDBheaders = ['id','first_name','last_name','_phone','business_usage_id',
-                     'created', '_location','lat','lng',
-                     'preferred_language',
-                     'is_market_enabled','_last_seen','_held_roles',
-                     'failed_pin_attempts','default_currency', 'terms_accepted','primary_blockchain_address']
+    private_userDBheaders = ['id', 'first_name', 'last_name', '_phone', 'business_usage_id',
+                             'created', '_location', 'lat', 'lng',
+                             'preferred_language',
+                             'is_market_enabled', '_last_seen', '_held_roles',
+                             'failed_pin_attempts', 'default_currency', 'terms_accepted', 'primary_blockchain_address']
+
+    private_userDBheadersRC = ['id', 'first_name', 'last_name', '_phone', 'business_usage_id',
+                             'created', '_location', 'lat', 'lng',
+                             'preferred_language',
+                             'is_market_enabled', '_last_seen', '_held_roles',
+                             'failed_pin_attempts', 'default_currency', 'terms_accepted', 'primary_blockchain_address']
 
     private_custUserDBheaders = ['bio','GE_community_token_id','gender','GE_wallet_address',]
 
 
-    public_userDBheaders = ['id','business_usage_id',
+    public_userDBheaders = ['id','business_usage_id', '_location',
                      'created',
                      'default_currency','primary_blockchain_address']
 #'_location',
-    public_custUserDBheaders = []
+    public_custUserDBheaders = ['gender']
 
 
     userDBheaders =  public_userDBheaders
@@ -935,8 +944,7 @@ nend_date = end_date
 
 
 if True:
-
-    import csv
+    kept_headers = []
     filename = 'sarafu_user_data_all_admin_private_'+days_ago_str+'.csv'
     if private == False:
         filename = 'sarafu_user_data_all_admin_pub_'+days_ago_str+'.csv'
@@ -946,7 +954,11 @@ if True:
         writerT.writerow(userHeaders)
         #print(userHeaders) #debug
         for user_id, user_data in userData.items():
-            writerT.writerow([str(user_data.get(attr, '')).strip('"') for attr in userHeaders])
+            zRow = list()
+            for attr in userHeaders:
+                zRow.append(str(user_data.get(attr, '')).strip('"'))
+            writerT.writerow(zRow)
+                #writerT.writerow([str(user_data.get(attr, '')).strip('"') for attr in userHeaders])
 
 
 generate_transaction_data_svg(txnData, userData, nstart_date, nend_date)
