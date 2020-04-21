@@ -15,7 +15,7 @@ logging.basicConfig(filename="batch_disburse"+time_stamp+".log", level=logging.I
 #reclamation = python sempo-cli.py --host admin.sarafu.network --port 443 reclaim 12152 10
 
 command_dis = ['python','sempo-cli.py', '--host', 'admin.sarafu.network', '--port', '443', '-o', '2', 'tx']
-command_rec = ['python','sempo-cli.py', '--host', 'admin.sarafu.network', '--port', 'reclaim']
+command_rec = ['python','sempo-cli.py', '--host', 'admin.sarafu.network', '--port', '443', 'reclaim']
 command = command_dis
 
 # read csv file
