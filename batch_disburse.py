@@ -11,7 +11,12 @@ time_stamp = datetime.now().strftime('%H_%M_%S_%d_%m_%Y')
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
 logging.basicConfig(filename="batch_disburse"+time_stamp+".log", level=logging.INFO)
-command = ['python','sempo-cli.py', '--ssl', '--host', 'admin.sarafu.network', '--port', '443', '-o', '2', 'tx']
+#disbursement = python sempo-cli.py --host admin.sarafu.network --port 443 -o 2 tx #idnum #amountx100
+#reclamation = python sempo-cli.py --host admin.sarafu.network --port 443 reclaim 12152 10
+
+command_dis = ['python','sempo-cli.py', '--host', 'admin.sarafu.network', '--port', '443', '-o', '2', 'tx']
+command_rec = ['python','sempo-cli.py', '--host', 'admin.sarafu.network', '--port', 'reclaim']
+command = command_dis
 
 # read csv file
 csv_file = open("test.csv", "r")
@@ -44,9 +49,16 @@ for txn in my_data_list[1:]:
     outputa = 'Output: ' + o.decode('ascii')
     logging.info(outputa)
 
-    if len(e.decode('ascii'))>1:
-        errora = 'Error: ' + e.decode('ascii')
-        logging.info(errora)
+
+    try:
+        if e is not None:
+            if len(e.decode('ascii')) > 1:
+                errora = 'Error: ' + e.decode('ascii')
+                logging.info(errora)
+    except UnicodeDecodeError:
+        continue
+
+
 
     #time.sleep(1)
 

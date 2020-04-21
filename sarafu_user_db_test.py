@@ -82,15 +82,16 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
                      't_location', 't_business_type', 'tx_token', 'weight', 'tx_hash', 'type','token_name', 'token_address']
 
 
-    headersUserPriv = ['id', 'start', 'label', 'first_name', 'last_name', 'phone', 'comm_tkn','old_POA_comm_tkn', 'old_POA_blockchain_address','xDAI_blockchain_address', 'gender', 'location',
-               'business_type', 'directory', 'bal','confidence']
+    headersUserPriv = ['id', 'start', 'label', 'first_name', 'last_name', 'phone', 'comm_tkn','old_POA_comm_tkn',
+                       'old_POA_blockchain_address','xDAI_blockchain_address', 'gender', 'location', 'held_roles',
+                       'business_type', 'directory', 'bal','confidence']
 
 
     headersUserPriv.extend(['ovol_in','ovol_out','otxns_in','otxns_out','ounique_in','ounique_out'])
     headersUserPriv.extend(['svol_in','svol_out','stxns_in','stxns_out','sunique_in','sunique_out'])
 
 
-    headersUserPub = ['id', 'start', 'label', 'gender', 'location',
+    headersUserPub = ['id', 'start', 'label', 'gender', 'location', 'held_roles',
                        'business_type', 'bal', 'xDAI_blockchain_address','confidence']
 
     headersUserPub.extend(['ovol_in','ovol_out','otxns_in','otxns_out','ounique_in','ounique_out'])
@@ -161,6 +162,7 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
 
                 user_data1['gender'] = user_info.get('gender', '').strip('"')
                 user_data1['location'] = user_info['_location']
+                user_data1['held_roles'] = user_info['_held_roles']
                 user_data1['business_type'] = user_info['_name']
                 user_data1['ovol_in'] = user_info['ovol_in']
                 user_data1['ovol_out'] = user_info['ovol_out']
@@ -591,7 +593,7 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
                     if amatch == True:
                         print("Found a match: (",rows_task[0],") ", rows_trans[2], aMatchDate)
                         if rows_trans[2].date() > aMatchDate.date():
-                            hashDict[rows_task[1]] = rows_trans[1]
+                            hashDict[rows_task[1]] = rows_trans[1] #matching blockchain_task.id and blockchain_transaction.blockchain_task_id
                     else:
                         hashDict[rows_task[1]] = rows_trans[1]
                         amatch = True
@@ -682,18 +684,11 @@ def get_user_info(conn,private=False):
                              'is_market_enabled', '_last_seen', '_held_roles',
                              'failed_pin_attempts', 'default_currency', 'terms_accepted', 'primary_blockchain_address']
 
-    private_userDBheadersRC = ['id', 'first_name', 'last_name', '_phone', 'business_usage_id',
-                             'created', '_location', 'lat', 'lng',
-                             'preferred_language',
-                             'is_market_enabled', '_last_seen', '_held_roles',
-                             'failed_pin_attempts', 'default_currency', 'terms_accepted', 'primary_blockchain_address']
-
     private_custUserDBheaders = ['bio','GE_community_token_id','gender','GE_wallet_address',]
 
 
-    public_userDBheaders = ['id','business_usage_id', '_location',
-                     'created',
-                     'default_currency','primary_blockchain_address']
+    public_userDBheaders = ['id','business_usage_id', '_location', '_held_roles',
+                     'created', 'default_currency','primary_blockchain_address']
 #'_location',
     public_custUserDBheaders = ['gender']
 
@@ -733,6 +728,8 @@ def get_user_info(conn,private=False):
         for h, r in zip(userDBheaders,row):
             if h == '_balance_wei':
                 r = r / 10 ** 18
+            elif h == '_held_roles':
+                r = list(r.keys())[0]
             uDict[h]=r
         userDict[uDict['id']]=uDict
 
