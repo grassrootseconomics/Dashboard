@@ -729,7 +729,8 @@ def get_user_info(conn,private=False):
             if h == '_balance_wei':
                 r = r / 10 ** 18
             elif h == '_held_roles':
-                r = list(r.keys())[0]
+                if r is not None:
+                    r = list(r.keys())[0]
             uDict[h]=r
         userDict[uDict['id']]=uDict
 
