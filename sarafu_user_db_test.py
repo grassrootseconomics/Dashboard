@@ -84,7 +84,7 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
 
     headersUserPriv = ['id', 'start', 'label', 'first_name', 'last_name', 'phone', 'comm_tkn','old_POA_comm_tkn',
                        'old_POA_blockchain_address','xDAI_blockchain_address', 'gender', 'location', 'held_roles',
-                       'business_type', 'directory', 'bal','confidence']
+                       'business_type', 'directory', 'bal']
 
 
     headersUserPriv.extend(['ovol_in','ovol_out','otxns_in','otxns_out','ounique_in','ounique_out'])
@@ -92,7 +92,7 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
 
 
     headersUserPub = ['id', 'start', 'label', 'gender', 'location', 'held_roles',
-                       'business_type', 'bal', 'xDAI_blockchain_address','confidence']
+                       'business_type', 'bal', 'xDAI_blockchain_address']
 
     headersUserPub.extend(['ovol_in','ovol_out','otxns_in','otxns_out','ounique_in','ounique_out'])
     headersUserPub.extend(['svol_in','svol_out','stxns_in','stxns_out','sunique_in','sunique_out'])
@@ -176,7 +176,7 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
                 user_data1['stxns_out'] = user_info['stxns_out']
                 user_data1['sunique_in'] = user_info['sunique_in']
                 user_data1['sunique_out'] = user_info['sunique_out']
-                user_data1['confidence'] = user_info['confidence']
+                #user_data1['confidence'] = user_info['confidence']
 
 
                 numberUsers+=1
@@ -887,10 +887,11 @@ for user, data in userData.items():
     tDict.update({'ptot_out_unique_at': userPercentage})
     userData[user] = tDict
 
+    in_and_out = 0
+    in_and_out = data['svol_out']
 
     max_out = 0
-
-    max_out = min([int(data['_balance_wei']/2),data['svol_out']])
+    max_out = min([int(data['_balance_wei'] / 2), data['svol_out']])
     tDict = data
     tDict.update({'max_out':max_out})
     userData[user]=tDict
@@ -898,7 +899,7 @@ for user, data in userData.items():
 userHeaders.extend(['ptot_out_unique_at'])
 userHeaders.extend(['max_out'])
 
-
+'''
 userConfidenceDict = {}
 for tid, tdata in txnData.items():
     userConfidence = 0
@@ -933,7 +934,7 @@ for user, data in userData.items():
     tDict.update({'confidence':confidence})
     userData[user]=tDict
 userHeaders.extend(['confidence'])
-
+'''
 
 generate_user_and_transaction_data_github_csv(txnData,userData,private=private)
 
@@ -959,5 +960,6 @@ if True:
                 #writerT.writerow([str(user_data.get(attr, '')).strip('"') for attr in userHeaders])
 
 
-generate_transaction_data_svg(txnData, userData, nstart_date, nend_date)
-output_Network_Viz(txnData, userData,nstart_date, nend_date,private)
+
+#generate_transaction_data_svg(txnData, userData, nstart_date, nend_date)
+#output_Network_Viz(txnData, userData,nstart_date, nend_date,private)
