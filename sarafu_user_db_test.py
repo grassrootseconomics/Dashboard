@@ -759,6 +759,35 @@ def get_user_info(conn,private=False):
     headers = userDBheaders[:5]+custUserDBheaders+userDBheaders[5:]
     return {'headers':headers, 'data': userDict}
 
+    # get user location
+    cmd = f"""WITH RECURSIVE location_r(id, parent_id, latitude, longitude, _name, pat) AS (
+SELECT
+    l.id,
+    l.parent_id,
+    l.latitude,
+    l.longitude,
+    l.common_name as _name,
+    l.common_name as pat
+FROM
+    location l
+WHERE
+    l.parent_id is null
+UNION
+SELECT
+    location.id,
+    location.parent_id,
+    location.latitude,
+    location.longitude,
+    location.common_name as _name,
+    concat(location.common_name, ', ', location_r.pat) as pat
+FROM
+    location_r
+INNER JOIN
+    location on location_r.id = location.parent_id
+)
+select e.user_id, r.id, pat, r.longitude, r.latitude from location_r r inner join user_extension_association_table e on e.location_id = r.id
+"""
+
 
 ##############################################################################################
 
