@@ -761,13 +761,12 @@ def get_user_info(conn,private=False):
 
     # get user location
 
-    cmd = f"""SELECT lr.child_id as location_id, lr.pat as path, l.latitude, l.longitude FROM
+    cmd = f"""SELECT u.id, lr.child_id as location_id, lr.pat as path, l.latitude, l.longitude FROM
 user_extension_association_table ue INNER JOIN location_recursive_tmp lr ON ue.location_id = lr.child_id
 INNER JOIN public.user u ON u.id = ue.user_id,
 location l
 WHERE
-l.id = lr.child_id AND
-u.id = <please fill in user id here>
+l.id = lr.child_id
 """
 
 
