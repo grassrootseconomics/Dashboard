@@ -514,7 +514,7 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
 def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
 
     offset = 0
-    step = 2000
+    step = 10000
     get_hashes = False
     hashDict = {}
     if get_hashes == True:
@@ -550,7 +550,7 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
 
 
         offset = 0
-        step = 2000
+        step = 5000
 
         while True:  #get task uuid blockchain_taks
 
@@ -612,7 +612,7 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
     txnDict = {}
     txDBheaders.extend(['token.name', 'token.address'])
     offset = 0
-    step = 2000
+    step = 6000
 
 
     while True:#rows_eth.len()>0:
@@ -750,24 +750,41 @@ def get_user_info(conn,private=False):
                 if row[0] in userDict.keys():
                     tDict = userDict[row[0]]
                     if h == 'GE_community_token_id':
-                        tkn_name = {h:GE_community_token_id_map[int(row[1].strip('"'))]}
+                        tkn_name = {h: GE_community_token_id_map[int(row[1].strip('"'))]}
                         tDict.update(tkn_name)
                     else:
-                        tDict.update({h:row[1]})
-                    userDict[row[0]]=tDict
+                        tDict.update({h: row[1]})
+                    userDict[row[0]] = tDict
 
     headers = userDBheaders[:5]+custUserDBheaders+userDBheaders[5:]
-    return {'headers':headers, 'data': userDict}
 
     # get user location
+    cmdLoc = "SELECT u.id, lr.child_id as location_id, lr.pat as path, l.latitude, l.longitude"
+    cmdLoc += " FROM user_extension_association_table ue"
+    cmdLoc += " INNER JOIN location_recursive_tmp lr"
+    cmdLoc += " ON ue.location_id = lr.child_id"
+    cmdLoc += " INNER JOIN public.user u ON u.id = ue.user_id, location l"
+    cmdLoc += " WHERE l.id = lr.child_id"
 
-    cmd = f"""SELECT u.id, lr.child_id as location_id, lr.pat as path, l.latitude, l.longitude FROM
-user_extension_association_table ue INNER JOIN location_recursive_tmp lr ON ue.location_id = lr.child_id
-INNER JOIN public.user u ON u.id = ue.user_id,
-location l
-WHERE
-l.id = lr.child_id
-"""
+    cur.execute(cmdLoc)
+
+    rows = cur.fetchall()
+    for row in rows:
+        #print("<><>loc<><><><><>",row)
+        if row[0] in userDict.keys():
+            tDict = userDict[row[0]]
+            tDict.update({"location_child_id": row[1]})
+            tDict.update({"location_path": row[2]})
+            tDict.update({"location_lat": row[3]})
+            tDict.update({"location_lon": row[4]})
+            userDict[row[0]] = tDict
+        else:
+            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#####User not found!")
+
+
+    headers = headers+['location_child_id','location_path','location_lat','location_lon']
+    return {'headers':headers, 'data': userDict}
+
 
 
 ##############################################################################################
