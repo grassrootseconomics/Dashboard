@@ -72,8 +72,8 @@ GE_community_token_id_map = {
 
 def generate_user_and_transaction_data_github_csv(txnData,userData,private=False):
 
-    headersTxPriv = ['id', 'timeset', 'transfer_subtype', 'transfer_use', 'source', 's_first_name', 's_last_name', 's_phone', 's_comm_tkn', 's_gender', 's_location_path', 's_location_lat','s_location_lon',
-               's_business_type', 's_directory', 'target', 't_first_name', 't_last_name', 't_phone', 't_comm_tkn', 't_gender',
+    headersTxPriv = ['id', 'timeset', 'transfer_subtype', 'transfer_use', 'source', 's_email', 's_first_name', 's_last_name', 's_phone', 's_comm_tkn', 's_gender', 's_location_path', 's_location_lat','s_location_lon',
+               's_business_type', 's_directory', 'target', 't_email', 't_first_name', 't_last_name', 't_phone', 't_comm_tkn', 't_gender',
                't_location_path', 't_location_lat', 't_location_lon', 't_business_type', 't_directory', 'tx_token', 'weight', 'tx_hash', 'type','token_name', 'token_address']
 
 
@@ -227,6 +227,7 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
                     #if sender_user_id in userData.keys():
                         if private:
                             row_data['tx_token'] = t['token_id']
+                            row_data['s_email'] = userData[sender_user_id]['email']
                             row_data['s_first_name'] = userData[sender_user_id]['first_name']
                             row_data['s_last_name'] = userData[sender_user_id]['last_name']
                             row_data['s_phone'] = userData[sender_user_id]['_phone']
@@ -245,6 +246,7 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
                     if True:
                     #if recipient_user_id in userData.keys():
                         if private:
+                            row_data['t_email'] = userData[recipient_user_id]['email']
                             row_data['t_first_name'] = userData[recipient_user_id]['first_name']
                             row_data['t_last_name'] = userData[recipient_user_id]['last_name']
                             row_data['t_phone'] = userData[recipient_user_id]['_phone']
