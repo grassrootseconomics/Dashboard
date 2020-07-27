@@ -72,18 +72,19 @@ GE_community_token_id_map = {
 
 def generate_user_and_transaction_data_github_csv(txnData,userData,private=False):
 
-    headersTxPriv = ['id', 'timeset', 'transfer_subtype', 'transfer_use', 'source', 's_first_name', 's_last_name', 's_phone', 's_comm_tkn', 's_gender', 's_location',
+    headersTxPriv = ['id', 'timeset', 'transfer_subtype', 'transfer_use', 'source', 's_first_name', 's_last_name', 's_phone', 's_comm_tkn', 's_gender', 's_location_path', 's_location_lat','s_location_lon',
                's_business_type', 's_directory', 'target', 't_first_name', 't_last_name', 't_phone', 't_comm_tkn', 't_gender',
-               't_location', 't_business_type', 't_directory', 'tx_token', 'weight', 'tx_hash', 'type','token_name', 'token_address']
+               't_location_path', 't_location_lat', 't_location_lon', 't_business_type', 't_directory', 'tx_token', 'weight', 'tx_hash', 'type','token_name', 'token_address']
 
 
-    headersTxPub = ['id', 'timeset', 'transfer_subtype', 'transfer_use','source', 's_comm_tkn', 's_gender', 's_location',
+    headersTxPub = ['id', 'timeset', 'transfer_subtype', 'transfer_use','source', 's_comm_tkn', 's_gender', 's_location_path', 's_location_lat','s_location_lon',
                      's_business_type', 'target', 't_comm_tkn', 't_gender',
-                     't_location', 't_business_type', 'tx_token', 'weight', 'tx_hash', 'type','token_name', 'token_address']
+                    't_location_path', 't_location_lat', 't_location_lon',
+                     't_business_type', 'tx_token', 'weight', 'type','token_name', 'token_address']
 
 
     headersUserPriv = ['id', 'start', 'label', 'first_name', 'last_name', 'phone', 'comm_tkn','old_POA_comm_tkn',
-                       'old_POA_blockchain_address','xDAI_blockchain_address', 'gender', 'location', 'held_roles',
+                       'old_POA_blockchain_address','xDAI_blockchain_address', 'gender', 'location', 'lat','lon', 'held_roles',
                        'business_type', 'directory', 'bal']
 
 
@@ -91,7 +92,7 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
     headersUserPriv.extend(['svol_in','svol_out','stxns_in','stxns_out','sunique_in','sunique_out'])
 
 
-    headersUserPub = ['id', 'start', 'label', 'gender', 'location', 'held_roles',
+    headersUserPub = ['id', 'start', 'label', 'gender', 'location', 'lat','lon', 'held_roles',
                        'business_type', 'bal', 'xDAI_blockchain_address']
 
     headersUserPub.extend(['ovol_in','ovol_out','otxns_in','otxns_out','ounique_in','ounique_out'])
@@ -161,7 +162,9 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
 
 
                 user_data1['gender'] = user_info.get('gender', '').strip('"')
-                user_data1['location'] = user_info['_location']
+                user_data1['location'] = user_info.get('location_path')
+                user_data1['lat'] = user_info.get('location_lat')
+                user_data1['lon'] = user_info.get('location_lon')
                 user_data1['held_roles'] = user_info['_held_roles']
                 user_data1['business_type'] = user_info['_name']
                 user_data1['ovol_in'] = user_info['ovol_in']
@@ -209,7 +212,8 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
                     row_data['transfer_subtype'] = t['transfer_subtype']
                     row_data['id'] = t['id']
                     row_data['label'] = t['id']
-                    row_data['tx_hash'] = t['blockchain_task_uuid']
+                    if private:
+                        row_data['tx_hash'] = t['blockchain_task_uuid']
                     row_data['token_name'] = t['token.name']
                     row_data['token_address'] = t['token.address']
                     if t['transfer_use'] != None:
@@ -227,8 +231,12 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
                             row_data['s_last_name'] = userData[sender_user_id]['last_name']
                             row_data['s_phone'] = userData[sender_user_id]['_phone']
                             row_data['s_directory'] = userData[sender_user_id].get('bio', '').strip('"')
-                    row_data['s_location'] = userData[sender_user_id]['_location']
-                    row_data['t_location'] = userData[recipient_user_id]['_location']
+                    row_data['s_location_path'] = userData[sender_user_id].get('location_path')
+                    row_data['s_location_lat'] = userData[sender_user_id].get('location_lat')
+                    row_data['s_location_lon'] = userData[sender_user_id].get('location_lon')
+                    row_data['t_location_path'] = userData[recipient_user_id].get('location_path')
+                    row_data['t_location_lat'] = userData[recipient_user_id].get('location_lat')
+                    row_data['t_location_lon'] = userData[recipient_user_id].get('location_lon')
                     row_data['s_gender'] = userData[sender_user_id].get('gender', '').strip('"')
                     row_data['s_comm_tkn'] = userData[sender_user_id]['default_currency']
                     row_data['s_business_type'] = userData[sender_user_id]['_name']
@@ -653,15 +661,15 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
 
             if not date_good:
                 continue
-            if tDict['sender_transfer_account_id'] in txnDict.keys():
-                txnDict[tDict['sender_transfer_account_id']].append(tDict)
+            if tDict['sender_user_id'] in txnDict.keys():
+                txnDict[tDict['sender_user_id']].append(tDict)
             else:
-                txnDict.update({tDict['sender_transfer_account_id']:[tDict]})
+                txnDict.update({tDict['sender_user_id']:[tDict]})
 
-            if tDict['recipient_transfer_account_id'] in txnDict.keys():
-                txnDict[tDict['recipient_transfer_account_id']].append(tDict)
+            if tDict['recipient_user_id'] in txnDict.keys():
+                txnDict[tDict['recipient_user_id']].append(tDict)
             else:
-                txnDict.update({tDict['recipient_transfer_account_id']:[tDict]})
+                txnDict.update({tDict['recipient_user_id']:[tDict]})
 
 
         if len(rows) ==0:
@@ -678,7 +686,7 @@ def get_user_info(conn,private=False):
 
     cur = conn.cursor()
 
-    private_userDBheaders = ['id', 'first_name', 'last_name', '_phone', 'business_usage_id',
+    private_userDBheaders = ['id', 'email', 'first_name', 'last_name', '_phone', 'business_usage_id',
                              'created', '_location', 'lat', 'lng',
                              'preferred_language',
                              'is_market_enabled', '_last_seen', '_held_roles',
@@ -700,6 +708,7 @@ def get_user_info(conn,private=False):
         userDBheaders =  private_userDBheaders
         custUserDBheaders = private_custUserDBheaders
 
+    # select count(sender_user_id) as c, sender_user_id, u.email from credit_transfer t inner join public.user u on t.sender_user_id = u.id group by sender_user_id, u.email order by c desc ;
 
     userItems = ', '.join(["u." + s for s in userDBheaders])
     #custUserItems = ', '.join(["custom_attribute_user_storage."+c for c in custUserDBheaders])
@@ -759,12 +768,13 @@ def get_user_info(conn,private=False):
     headers = userDBheaders[:5]+custUserDBheaders+userDBheaders[5:]
 
     # get user location
-    cmdLoc = "SELECT u.id, lr.child_id as location_id, lr.pat as path, l.latitude, l.longitude"
+    cmdLoc = "SELECT u.id, e.external_reference, lr.child_id as location_id, lr.pat as path, l.latitude, l.longitude"
     cmdLoc += " FROM user_extension_association_table ue"
     cmdLoc += " INNER JOIN location_recursive_tmp lr"
     cmdLoc += " ON ue.location_id = lr.child_id"
-    cmdLoc += " INNER JOIN public.user u ON u.id = ue.user_id, location l"
-    cmdLoc += " WHERE l.id = lr.child_id"
+    cmdLoc += " INNER JOIN public.user u"
+    cmdLoc += " ON u.id = ue.user_id, location l, location_external e"
+    cmdLoc += " WHERE e.location_id = lr.parent_id and l.id = lr.child_id"
 
     cur.execute(cmdLoc)
 
@@ -773,16 +783,21 @@ def get_user_info(conn,private=False):
         #print("<><>loc<><><><><>",row)
         if row[0] in userDict.keys():
             tDict = userDict[row[0]]
-            tDict.update({"location_child_id": row[1]})
-            tDict.update({"location_path": row[2]})
-            tDict.update({"location_lat": row[3]})
-            tDict.update({"location_lon": row[4]})
+            if not private: #public stuff
+                lPath = row[3].split(", ")[1:]
+                lPathStr = ",".join(lPath)
+                tDict.update({"location_path": lPathStr})
+            else:
+                tDict.update({"osmid": row[1]})
+                tDict.update({"location_path": row[3]})
+            tDict.update({"location_lat": row[4]})
+            tDict.update({"location_lon": row[5]})
             userDict[row[0]] = tDict
         else:
             print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#####User not found!")
 
 
-    headers = headers+['location_child_id','location_path','location_lat','location_lon']
+    headers = headers+['osmid','location_path','location_lat','location_lon']
     return {'headers':headers, 'data': userDict}
 
 
@@ -856,20 +871,20 @@ for user in userData.keys():
     sseenUsers = []
     seenUsers = []
 
-    if(userData[user]['transfer_account_id'] in txnData.keys()):
-        for trans in txnData[userData[user]['transfer_account_id']]:
-               if trans['sender_transfer_account_id'] == userData[user]['transfer_account_id']:
+    if(userData[user]['id'] in txnData.keys()):
+        for trans in txnData[userData[user]['id']]:
+               if trans['sender_user_id'] == userData[user]['id']:
                    if trans['transfer_subtype'] != 'STANDARD':
                         volume_out+=trans['_transfer_amount_wei']
                         txns_out+=1
-                        if trans['recipient_transfer_account_id'] not in seenUsers:
-                            seenUsers.append(trans['recipient_transfer_account_id'])
+                        if trans['recipient_user_id'] not in seenUsers:
+                            seenUsers.append(trans['recipient_user_id'])
                             unique_txns_out+=1
                    else:
                         svolume_out+=trans['_transfer_amount_wei']
                         stxns_out+=1
-                        if trans['recipient_transfer_account_id'] not in sseenUsers:
-                            sseenUsers.append(trans['recipient_transfer_account_id'])
+                        if trans['recipient_user_id'] not in sseenUsers:
+                            sseenUsers.append(trans['recipient_user_id'])
                             sunique_txns_out+=1
                             if(trans['_transfer_amount_wei']>=min_size):
                                 sunique_txns_out_atleast += 1
@@ -879,14 +894,14 @@ for user in userData.keys():
                     if trans['transfer_subtype'] != 'STANDARD':
                         volume_in+=trans['_transfer_amount_wei']
                         txns_in+=1
-                        if trans['sender_transfer_account_id'] not in seenUsers:
-                            seenUsers.append(trans['sender_transfer_account_id'])
+                        if trans['sender_user_id'] not in seenUsers:
+                            seenUsers.append(trans['sender_user_id'])
                             unique_txns_in+=1
                     else:
                         svolume_in+=trans['_transfer_amount_wei']
                         stxns_in+=1
-                        if trans['sender_transfer_account_id'] not in sseenUsers:
-                            sseenUsers.append(trans['sender_transfer_account_id'])
+                        if trans['sender_user_id'] not in sseenUsers:
+                            sseenUsers.append(trans['sender_user_id'])
                             sunique_txns_in+=1
                             if(trans['_transfer_amount_wei']>=min_size):
                                 sunique_txns_in_atleast+=1
