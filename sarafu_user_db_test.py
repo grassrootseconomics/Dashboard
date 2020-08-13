@@ -399,42 +399,43 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
 
 
     # get hist stats volume and number
-    for tnsfer_acct__id, transactions in txnData.items():
-        sumTx = 0
-        sumVol = 0
+    if False:
+        for tnsfer_acct__id, transactions in txnData.items():
+            sumTx = 0
+            sumVol = 0
 
 
-        addedTx = False
-        type_std = True
-        for t in transactions:
-            #token_name = t['transfer_subtype']
-            token_name = 'STANDARD'
-            if t['transfer_subtype'] != 'STANDARD':
-                continue
+            addedTx = False
+            type_std = True
+            for t in transactions:
+                #token_name = t['transfer_subtype']
+                token_name = 'STANDARD'
+                if t['transfer_subtype'] != 'STANDARD':
+                    continue
 
-            if t['sender_transfer_account_id'] != tnsfer_acct__id:
-                continue
+                if t['sender_transfer_account_id'] != tnsfer_acct__id:
+                    continue
 
-            date = t['created'].date()  # Date.from_timestamp(t['created'])
-            idx = (end_date - date).days
+                date = t['created'].date()  # Date.from_timestamp(t['created'])
+                idx = (end_date - date).days
 
-            amount = int(t['_transfer_amount_wei'])
+                amount = int(t['_transfer_amount_wei'])
 
 
 
-            for sto in communities:
-                if token_name == sto:
-                    sumVol += amount
+                for sto in communities:
+                    if token_name == sto:
+                        sumVol += amount
 
-                    sumTx += 1
+                        sumTx += 1
 
-                    addedTx = True
+                        addedTx = True
 
-        if addedTx:
-            if sumVol> 0 and sumVol < 2000:
-                voltx_data.append(sumVol)
-            if sumTx >0 and sumTx < 20:
-                numtx_data.append(sumTx)
+            if addedTx:
+                if sumVol> 0 and sumVol < 2000:
+                    voltx_data.append(sumVol)
+                if sumTx >0 and sumTx < 20:
+                    numtx_data.append(sumTx)
 
 
     # get volume and number
@@ -474,9 +475,9 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
             #y_values = cumulate(y_values)
 
     plt.figure(1)
-    fig, axs = plt.subplots(nrows=2, ncols=2, sharex=False)
+    fig, axs = plt.subplots(nrows=2, ncols=1, sharex=False)
 
-    ax0, ax1, ax2, ax3 = axs.flatten()
+    ax0, ax2 = axs.flatten()
 
     #df = df[::-1]
 
@@ -489,9 +490,9 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
     ax0.xaxis.set_minor_locator(daysL)
     #ax0.autofmt_xdate()
 
-    ax1.set_title('Volume Historgram')
-    ax1.hist(voltx_data, bins=50, facecolor='g', alpha=0.75, label='Volume Hist')
-    ax1.xaxis.set_visible(True)
+    #ax1.set_title('Volume Histogram')
+    #ax1.hist(voltx_data, bins=50, facecolor='g', alpha=0.75, label='Volume Hist')
+    #ax1.xaxis.set_visible(True)
 
     ax2.set_title('Number of Standard Transactions & Number of New Users')
     ax2.plot(x_values, y_numtx_values["STANDARD"][::-1], 'o-', label='# Txns')
@@ -501,8 +502,8 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
     #ax2.autofmt_xdate()
 
     #branch
-    ax3.set_title('Transaction Historgram')
-    ax3.hist(numtx_data, bins=50, facecolor='g', alpha=0.75, label='Volume Hist')
+    #ax3.set_title('Transaction Historgram')
+    #ax3.hist(numtx_data, bins=50, facecolor='g', alpha=0.75, label='Volume Hist')
 
     # find to be highlighted areas, see functions
     weekend_indices = find_weekend_indices(x_values)
@@ -525,26 +526,16 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
 
     offset = 0
     step = 10000
-    get_hashes = False
+    get_hashes = True
     hashDict = {}
     if get_hashes == True:
         rows_eth_trans_all = []
         rows_eth_task_all = []
 
-        while True:  # rows_eth.len()>0:
-
-            # cmd_eth = "SELECT DISTINCT ON(blockchain_task.id) blockchain_task.uuid, blockchain_transaction.hash"
-            # cmd_eth += " FROM blockchain_task INNER JOIN blockchain_transaction ON"
-            # cmd_eth += " blockchain_task.id = blockchain_transaction.blockchain_task_id"
-            # cmd_eth += " WHERE blockchain_transaction._status = 'SUCCESS'"
-            # cmd_eth += " ORDER BY blockchain_transaction.id LIMIT " + str(step) + " OFFSET " + str(offset)
+        while True:
 
             cmd_eth = "SELECT tran.blockchain_task_id, tran.hash, tran.updated FROM blockchain_transaction as tran"
             cmd_eth += " WHERE tran._status = 'SUCCESS' ORDER BY tran.id LIMIT " + str(step) + " OFFSET " + str(offset)
-
-            # cmd_eth = "SELECT task.uuid, tran.hash FROM blockchain_transaction as tran"
-            # cmd_eth += " INNER JOIN blockchain_task as task on task.id = tran.blockchain_task_id"
-            # cmd_eth += " WHERE task.status_text = 'SUCCESS' ORDER BY tran.id LIMIT " + str(step) + " OFFSET " + str(offset)
 
             cur_eth = eth_conn.cursor()
             cur_eth.execute(cmd_eth)
@@ -564,18 +555,8 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
 
         while True:  #get task uuid blockchain_taks
 
-            # cmd_eth = "SELECT DISTINCT ON(blockchain_task.id) blockchain_task.uuid, blockchain_transaction.hash"
-            # cmd_eth += " FROM blockchain_task INNER JOIN blockchain_transaction ON"
-            # cmd_eth += " blockchain_task.id = blockchain_transaction.blockchain_task_id"
-            # cmd_eth += " WHERE blockchain_transaction._status = 'SUCCESS'"
-            # cmd_eth += " ORDER BY blockchain_transaction.id LIMIT " + str(step) + " OFFSET " + str(offset)
-
             cmd_eth = "SELECT task.id, task.uuid FROM blockchain_task as task"
             cmd_eth += " WHERE task.status_text = 'SUCCESS' ORDER BY task.id LIMIT " + str(step) + " OFFSET " + str(offset)
-
-            # cmd_eth = "SELECT task.uuid, tran.hash FROM blockchain_transaction as tran"
-            # cmd_eth += " INNER JOIN blockchain_task as task on task.id = tran.blockchain_task_id"
-            # cmd_eth += " WHERE task.status_text = 'SUCCESS' ORDER BY tran.id LIMIT " + str(step) + " OFFSET " + str(offset)
 
             cur_eth = eth_conn.cursor()
             cur_eth.execute(cmd_eth)
@@ -594,8 +575,6 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
         for rows_task in rows_eth_task_all:
             amatch = False
             aMatchDate = None
-            #print(" ")
-            #print(" ><><><>TEST")
             for rows_trans in rows_eth_trans_all:
                 #print(rows_task[0], rows_trans[0])
                 if rows_task[0] == rows_trans[0]:
@@ -785,21 +764,24 @@ def get_user_info(conn,private=False):
         #print("<><>loc<><><><><>",row)
         if row[0] in userDict.keys():
             tDict = userDict[row[0]]
+            lPath = row[3].split(", ")[1:]
+            lPathStr = ",".join(lPath)
+            #lPath = row[3].split(", ")[1:]
+            pathParent = lPathStr
             if not private: #public stuff
-                lPath = row[3].split(", ")[1:]
-                lPathStr = ",".join(lPath)
                 tDict.update({"location_path": lPathStr})
             else:
                 tDict.update({"osmid": row[1]})
                 tDict.update({"location_path": row[3]})
             tDict.update({"location_lat": row[4]})
             tDict.update({"location_lon": row[5]})
+            tDict.update({"location_parent": pathParent})
             userDict[row[0]] = tDict
         else:
             print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#####User not found!")
 
 
-    headers = headers+['osmid','location_path','location_lat','location_lon']
+    headers = headers+['osmid','location_parent','location_path','location_lat','location_lon']
     return {'headers':headers, 'data': userDict}
 
 
@@ -1005,5 +987,5 @@ if True:
 
 
 
-#generate_transaction_data_svg(txnData, userData, nstart_date, nend_date)
+generate_transaction_data_svg(txnData, userData, nstart_date, nend_date)
 #output_Network_Viz(txnData, userData,nstart_date, nend_date,private)
