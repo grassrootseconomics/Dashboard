@@ -526,7 +526,7 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
 
     offset = 0
     step = 10000
-    get_hashes = True
+    get_hashes = False
     hashDict = {}
     if get_hashes == True:
         rows_eth_trans_all = []
@@ -635,9 +635,10 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
                             r = "no hash found and uuid = None"
 
                 if h == 'created' and start_date != None and end_date != None:
-                    #print(r) #2020-01-25 19:13:17.731529
-                    if r.date() > end_date or r.date() <start_date:
+                    # print(r) #2020-01-25 19:13:17.731529
+                    if r.date() > end_date or r.date() < start_date:
                         date_good = False
+
                 tDict[h]=r
 
             if not date_good:
@@ -804,12 +805,12 @@ if dbpass == None:
             """)
 else:
     conn = psycopg2.connect(
-            f"""
-            dbname=sarafu_app
-            user={dbuser}
-            host={dbname}
-            password={dbpass}
-            """)
+        f"""
+                dbname=sarafu_app
+                user={dbuser}
+                host={dbname}
+                password={dbpass}
+                """)
 
     eth_conn = psycopg2.connect(
             f"""
