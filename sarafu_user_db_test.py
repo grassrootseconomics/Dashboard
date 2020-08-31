@@ -4,6 +4,7 @@ import os
 import psycopg2
 import getopt
 import sys
+import copy
 import csv
 import time
 from toolkit import Date
@@ -70,7 +71,7 @@ GE_community_token_id_map = {
     8: "Miyani", 9: "Olympic", 10: "Takaungu", 11: "Congo", 12: "Sarafu", 13: "Nairobi", 14: "Mkanyeni",
     15: "Mnyenzeni", 16: "Grassroots", 17: "Chigato"}
 
-def generate_user_and_transaction_data_github_csv(txnData,userData,private=False):
+def generate_user_and_transaction_data_github_csv(txnData,userData,unique_txnData,private=False):
 
     headersTxPriv = ['id', 'timeset', 'transfer_subtype', 'transfer_use', 'source', 's_email', 's_first_name', 's_last_name', 's_phone', 's_comm_tkn', 's_gender', 's_location_path', 's_location_lat','s_location_lon',
                's_business_type', 's_directory', 'target', 't_email', 't_first_name', 't_last_name', 't_phone', 't_comm_tkn', 't_gender',
@@ -190,11 +191,14 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,private=False
             chunks = 10000
             tx_hash = []
 
-            for tnsfer_acct__id, transactions in txnData.items():
-                for t in transactions:
-                    if t['id'] in tx_hash:
-                        continue
-                    tx_hash.append(t['id'])
+            #for tnsfer_acct__id, transactions in txnData.items():
+            if len(unique_txnData)>0:
+                for t in unique_txnData:
+                    #if t['id'] in tx_hash:  # only looking at unique data: note that without this there will be double counting on transactions
+                    #    print("Error: duplicate transaction found!", t['id'])
+                    #    time.sleep(1.5)
+                    #    continue
+                    #tx_hash.append(t['id'])
 
                     sender_user_id = t['sender_user_id']
                     recipient_user_id = t['recipient_user_id']
@@ -315,7 +319,7 @@ def generate_chama_data(txnData, userData, start_date=None, end_date=None):
 
     return None
 
-def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=None):
+def generate_transaction_data_svg(txnData, userData, unique_txnData, start_date=None, end_date=None):
 
     days = 0
     days_str = ""
@@ -323,12 +327,11 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
         earlyDate = Date().n_days_ahead(days=2)
         lateDate = Date().n_days_ago(days=2000)
         nend_date = Date().today()
-        for u, trans in txnData.items():
-            for t in trans:
-                if t['created'].date() < earlyDate:
-                    earlyDate = t['created'].date()
-                if t['created'].date() > lateDate:
-                    lateDate = t['created'].date()
+        for t in unique_txnData:
+            if t['created'].date() < earlyDate:
+                earlyDate = t['created'].date()
+            if t['created'].date() > lateDate:
+                lateDate = t['created'].date()
         start_date = earlyDate
         end_date = lateDate
         days = (end_date - start_date).days + 1
@@ -439,12 +442,12 @@ def generate_transaction_data_svg(txnData, userData, start_date=None, end_date=N
 
 
     # get volume and number
-    for tnsfer_acct__id, transactions in txnData.items():
-
-        for t in transactions:
-            if t['id'] in tx_hash:
-                continue
-            tx_hash.append(t['id'])
+    # for tnsfer_acct__id, transactions in txnData.items():
+    if True:
+        for t in unique_txnData:
+            #if t['id'] in tx_hash: #no longer needed
+            #    continue
+            #tx_hash.append(t['id'])
 
             token_name = t['transfer_subtype']
             if token_name not in token_names:
@@ -571,7 +574,7 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
             offset += step
 
 
-        print(" ><><><>TESTaa")
+
         for rows_task in rows_eth_task_all:
             amatch = False
             aMatchDate = None
@@ -660,7 +663,30 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
         print("credit bulk offset: "+ str(offset)+" results "+ str(len(rows)))
         offset+=step
 
-    return {'headers':txDBheaders, 'data': txnDict}
+    # get all unique transactions
+    tx_hash=[]
+    unique_tx_hash = []
+    totalTxns = 0
+    uniqueTxns = 0
+    printDotsChunks = 10000
+    printDots = 0
+    print("Finding unique transactions . = ", printDotsChunks)
+    for tnsfer_acct__id, transactions in txnDict.items():
+        for t in transactions:
+            totalTxns += 1
+            if t['id'] not in tx_hash:  # note that without this there will be double counting on transactions
+                tx_hash.append(t['id'])
+                unique_tx_hash.append(t)
+                uniqueTxns += 1
+            printDots += 1
+            # print(printDots, end=" ")
+            if printDots > printDotsChunks:
+                print(".", end=" ", flush=True)
+                printDots = 0
+
+    print("Found: ", totalTxns, " Unique: ", uniqueTxns)
+
+    return {'headers':txDBheaders, 'data': txnDict, 'unique_txns': unique_tx_hash}
 
 
 
@@ -762,7 +788,7 @@ def get_user_info(conn,private=False):
 
     rows = cur.fetchall()
     for row in rows:
-        #print("<><>loc<><><><><>",row)
+
         if row[0] in userDict.keys():
             tDict = userDict[row[0]]
             lPath = row[3].split(", ")[1:]
@@ -823,6 +849,7 @@ else:
 tResult = get_txns_acct_txns(conn, eth_conn, start_date, end_date)
 txHeaders = tResult['headers']
 txnData = tResult['data']
+unique_txnData = tResult['unique_txns']
 
 uResult = get_user_info(conn,private=private)
 userHeaders = uResult['headers']
@@ -830,6 +857,7 @@ userData = uResult['data']
 
 #total_unique_in_out_atleast = 0
 stotal_unique_txns_out_atleast = 0
+stotal_unique_txns_out_atleast_group = 0
 
 for user in userData.keys():
     volume_in = 0
@@ -847,6 +875,8 @@ for user in userData.keys():
     sunique_txns_in = 0
 
     sunique_txns_out_atleast = 0
+    #stotal_unique_txns_out_atleast_group += 1
+    sunique_txns_out_atleast_group = 0
     sunique_txns_in_atleast = 0
 
 
@@ -874,6 +904,10 @@ for user in userData.keys():
                             if(trans['_transfer_amount_wei']>=min_size):
                                 sunique_txns_out_atleast += 1
                                 stotal_unique_txns_out_atleast += 1
+                                if userData[user]['_held_roles'] == "GROUP_ACCOUNT":
+                                    sunique_txns_out_atleast_group += 1
+                                    stotal_unique_txns_out_atleast_group += 1
+
 
                else:
                     if trans['transfer_subtype'] != 'STANDARD':
@@ -896,22 +930,30 @@ for user in userData.keys():
     #total_unique_out_atleast += stotal_unique_txns_out_atleast
 
 
-    txData = {'ovol_in':volume_in, 'ovol_out':volume_out,'otxns_in':txns_in,'otxns_out':txns_out,'ounique_in':unique_txns_in, 'ounique_out':unique_txns_out,
-    'svol_in':svolume_in, 'svol_out':svolume_out,'stxns_in':stxns_in,'stxns_out':stxns_out,'sunique_in':sunique_txns_in,'sunique_out':sunique_txns_out,'sunique_in_at':sunique_txns_in_atleast,'sunique_out_at':sunique_txns_out_atleast}
+    txData = {'ovol_in':volume_in, 'ovol_out':volume_out,'otxns_in':txns_in,'otxns_out':txns_out,
+              'ounique_in':unique_txns_in, 'ounique_out':unique_txns_out,
+    'svol_in':svolume_in, 'svol_out':svolume_out,'stxns_in':stxns_in,'stxns_out':stxns_out,
+              'sunique_in':sunique_txns_in,'sunique_out':sunique_txns_out,'sunique_in_at':sunique_txns_in_atleast,
+              'sunique_out_at':sunique_txns_out_atleast,'sunique_out_at_group':sunique_txns_out_atleast_group}
 
     uDict = userData[user]
     uDict.update(txData)
     userData[user]=uDict
 
 userHeaders.extend(['ovol_in','ovol_out','otxns_in','otxns_out','ounique_in','ounique_out'])
-userHeaders.extend(['svol_in','svol_out','stxns_in','stxns_out','sunique_in','sunique_out','sunique_in_at','sunique_out_at'])
+userHeaders.extend(['svol_in','svol_out','stxns_in','stxns_out','sunique_in','sunique_out','sunique_in_at','sunique_out_at','sunique_out_at_group'])
 
 for user, data in userData.items():
     userPercentage = 0
-    if stotal_unique_txns_out_atleast >0:
-        userPercentage = data['sunique_out_at']/stotal_unique_txns_out_atleast
+    groupPercentage = 0
+    if stotal_unique_txns_out_atleast > 0:
+        userPercentage = data['sunique_out_at'] / stotal_unique_txns_out_atleast
+    if stotal_unique_txns_out_atleast_group > 0:
+        groupPercentage = data['sunique_out_at_group'] / stotal_unique_txns_out_atleast_group
+
     tDict = data
     tDict.update({'ptot_out_unique_at': userPercentage})
+    tDict.update({'ptot_out_unique_at_group': groupPercentage})
     userData[user] = tDict
 
     in_and_out = 0
@@ -924,6 +966,7 @@ for user, data in userData.items():
     userData[user]=tDict
 
 userHeaders.extend(['ptot_out_unique_at'])
+userHeaders.extend(['ptot_out_unique_at_group'])
 userHeaders.extend(['max_out'])
 
 '''
@@ -963,7 +1006,7 @@ for user, data in userData.items():
 userHeaders.extend(['confidence'])
 '''
 
-generate_user_and_transaction_data_github_csv(txnData,userData,private=private)
+generate_user_and_transaction_data_github_csv(txnData,userData,unique_txnData,private=private)
 
 nstart_date = start_date
 nend_date = end_date
@@ -988,5 +1031,5 @@ if True:
 
 
 
-generate_transaction_data_svg(txnData, userData, nstart_date, nend_date)
+generate_transaction_data_svg(txnData, userData, unique_txnData, nstart_date, nend_date)
 #output_Network_Viz(txnData, userData,nstart_date, nend_date,private)
