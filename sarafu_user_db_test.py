@@ -18,6 +18,9 @@ end_date = None
 dbname=os.environ.get('DBNAME')
 dbuser=os.environ.get('DBUSER')
 dbpass=os.environ.get('DBPASS')
+#dbuser="postgres" #os.environ.get('DBUSER')
+#dbpass="password" #os.environ.get('DBPASS')
+
 
 
 private=True
@@ -75,7 +78,7 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,unique_txnDat
 
     headersTxPriv = ['id', 'timeset', 'transfer_subtype', 'transfer_use', 'source', 's_email', 's_first_name', 's_last_name', 's_phone', 's_comm_tkn', 's_gender', 's_location_path', 's_location_lat','s_location_lon',
                's_business_type', 's_directory', 'target', 't_email', 't_first_name', 't_last_name', 't_phone', 't_comm_tkn', 't_gender',
-               't_location_path', 't_location_lat', 't_location_lon', 't_business_type', 't_directory', 'tx_token', 'weight', 'tx_hash', 'type','token_name', 'token_address']
+               't_location_path', 't_location_lat', 't_location_lon', 't_business_type', 't_directory', 't_url1','t_url2', 'tx_token', 'weight', 'tx_hash', 'type','token_name', 'token_address']
 
 
     headersTxPub = ['id', 'timeset', 'transfer_subtype', 'transfer_use','source', 's_comm_tkn', 's_gender', 's_location_path', 's_location_lat','s_location_lon',
@@ -219,6 +222,7 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,unique_txnDat
                     if private:
                         row_data['tx_hash'] = t['blockchain_task_uuid']
                     row_data['token_name'] = t['token.name']
+                    row_data['authorising_user_id'] = t.get('authorising_user_id') #t['authorising_user_id']
                     row_data['token_address'] = t['token.address']
                     if t['transfer_use'] != None:
                         row_data['transfer_use'] = t['transfer_use'][0].strip('"[]')
@@ -231,7 +235,7 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,unique_txnDat
                     #if sender_user_id in userData.keys():
                         if private:
                             row_data['tx_token'] = t['token_id']
-                            row_data['s_email'] = userData[sender_user_id]['email']
+                            row_data['s_email'] = userData[sender_user_id].get('email')
                             row_data['s_first_name'] = userData[sender_user_id]['first_name']
                             row_data['s_last_name'] = userData[sender_user_id]['last_name']
                             row_data['s_phone'] = userData[sender_user_id]['_phone']
@@ -254,32 +258,36 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,unique_txnDat
                             row_data['t_first_name'] = userData[recipient_user_id]['first_name']
                             row_data['t_last_name'] = userData[recipient_user_id]['last_name']
                             row_data['t_phone'] = userData[recipient_user_id]['_phone']
-                            row_data['t_directory'] = userData[recipient_user_id].get('bio','').strip('"')
+                            row_data['t_url1'] = userData[recipient_user_id].get('user_url')
+                            row_data['t_url2'] = userData[recipient_user_id].get('user_accounts_url')
                         row_data['t_gender'] = userData[recipient_user_id].get('gender','').strip('"')
                         row_data['t_comm_tkn'] = userData[recipient_user_id]['default_currency']
                         row_data['t_business_type'] = userData[recipient_user_id]['_name']
 
+                    #if row_data['authorising_user_id'] is not None and row_data['authorising_user_id'] != 6:
+                    #    print("Row,", row_data['s_email'], row_data['authorising_user_id'], row_data['t_first_name'], row_data['t_last_name'], row_data['t_phone'], row_data['weight'] )
 
-                    rowString = []
-                    for k in headersTx:
-                        if k in row_data.keys():
-                            #spamwriterTx.writerow([str(row_data[k]) for k in headersTx])
-                            rowString.append(str(row_data[k]))
+                    if True: #Admin ONLY row_data['authorising_user_id'] is not None and row_data['authorising_user_id'] != 6: #Admin ONLY
+                        rowString = []
+                        for k in headersTx:
+                            if k in row_data.keys():
+                                #spamwriterTx.writerow([str(row_data[k]) for k in headersTx])
+                                rowString.append(str(row_data[k]))
+                            else:
+                                rowString.append('')
+
+                        spamwriterTx.writerow(rowString)
+                        if indexR < 3:
+                            #print(row_data) #debug
+                            indexR+=1
+                        if c_idx >= chunks:
+                            c_idx = 0
+                            csvfileTx.flush()  # whenever you want
+                            print("chunk: ", numberTx)
                         else:
-                            rowString.append('')
+                            c_idx += 1
 
-                    spamwriterTx.writerow(rowString)
-                    if indexR < 3:
-                        #print(row_data) #debug
-                        indexR+=1
-                    if c_idx >= chunks:
-                        c_idx = 0
-                        csvfileTx.flush()  # whenever you want
-                        print("chunk: ", numberTx)
-                    else:
-                        c_idx += 1
-
-                    numberTx += 1
+                        numberTx += 1
 
         print("****saved all transactions to csv", filenameTx, " number of tx:", numberTx, timestr)
         print("****saved all users to csv", filenameUser, " number of User:", numberUsers, timestr)
@@ -605,7 +613,7 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
     txDBheaders.extend(['token.name', 'token.address'])
     offset = 0
     step = 6000
-
+    unique_tx_hash = []
 
     while True:#rows_eth.len()>0:
 
@@ -614,22 +622,18 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
 
         cur.execute(cmd)
         rows = cur.fetchall()
-
-
-
-
         for row in rows:
             tDict = {}
             date_good = True
-            for h, r in zip(txDBheaders,row):
+            for h, r in zip(txDBheaders, row):
                 if h == '_transfer_amount_wei':
-                    r = r/ 10 ** 18
+                    r = r / 10 ** 18
 
                 if h == 'blockchain_task_uuid':
                     br = r
                     if r in hashDict.keys():
                         r = hashDict[r]
-                        if r== None:
+                        if r == None:
                             r = "Found hash of None for uuid = " + br
                     else:
                         if r is not None:
@@ -642,49 +646,128 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
                     if r.date() > end_date or r.date() < start_date:
                         date_good = False
 
-                tDict[h]=r
+                tDict[h] = r
 
             if not date_good:
                 continue
+            unique_tx_hash.append(tDict)
             if tDict['sender_user_id'] in txnDict.keys():
                 txnDict[tDict['sender_user_id']].append(tDict)
             else:
-                txnDict.update({tDict['sender_user_id']:[tDict]})
+                txnDict.update({tDict['sender_user_id']: [tDict]})
 
             if tDict['recipient_user_id'] in txnDict.keys():
                 txnDict[tDict['recipient_user_id']].append(tDict)
             else:
-                txnDict.update({tDict['recipient_user_id']:[tDict]})
+                txnDict.update({tDict['recipient_user_id']: [tDict]})
 
-
-        if len(rows) ==0:
+        if len(rows) == 0:
             break
 
-        print("credit bulk offset: "+ str(offset)+" results "+ str(len(rows)))
-        offset+=step
+        print(".", end=" ", flush=True)
+        #print("credit bulk offset: " + str(offset) + " results " + str(len(rows)))
+        offset += step
 
     # get all unique transactions
-    tx_hash=[]
-    unique_tx_hash = []
-    totalTxns = 0
-    uniqueTxns = 0
-    printDotsChunks = 10000
-    printDots = 0
-    print("Finding unique transactions . = ", printDotsChunks)
-    for tnsfer_acct__id, transactions in txnDict.items():
-        for t in transactions:
-            totalTxns += 1
-            if t['id'] not in tx_hash:  # note that without this there will be double counting on transactions
-                tx_hash.append(t['id'])
-                unique_tx_hash.append(t)
-                uniqueTxns += 1
-            printDots += 1
-            # print(printDots, end=" ")
-            if printDots > printDotsChunks:
-                print(".", end=" ", flush=True)
-                printDots = 0
+    if False:
+        tx_hash = []
+        unique_tx_hashb = []
+        totalTxns = 0
+        uniqueTxns = 0
+        printDotsChunks = 10000
+        printDots = 0
+        print("Finding unique transactions . = ", printDotsChunks)
+        for tnsfer_acct__id, transactions in txnDict.items():
+            for t in transactions:
+                totalTxns += 1
+                if t['id'] not in tx_hash:  # note that without this there will be double counting on transactions
+                    tx_hash.append(t['id'])
+                    unique_tx_hashb.append(t)
+                    uniqueTxns += 1
+                printDots += 1
+                # print(printDots, end=" ")
+                if printDots > printDotsChunks:
+                    print(".", end=" ", flush=True)
+                    printDots = 0
 
-    print("Found: ", totalTxns, " Unique: ", uniqueTxns)
+        print("Found Original: ", len(unique_tx_hashb))
+        #print("Found: ", totalTxns, " Unique: ", uniqueTxns)
+
+    #GEt from public views
+    if False:
+        txPubDBheaders = ['source', 'target', 'weight', 'transfer_subtype', 'transfer_status', 'timeset', 'task_uuid']
+
+        txPubItems = ', '.join(["renderers.tx_meta_view." + s for s in txPubDBheaders])
+        curPub = conn.cursor()
+
+        txnPubDict = {}
+        offset = 0
+        step = 6000
+
+        while True:  # rows_eth.len()>0:
+
+            cmd = "SELECT "+txPubItems+" FROM renderers.tx_meta_view "
+            cmd += "WHERE renderers.tx_meta_view.transfer_status = 'COMPLETE' "
+            cmd += "ORDER BY renderers.tx_meta_view.id LIMIT " + str(step) + " OFFSET " + str(offset)
+
+
+
+
+            curPub.execute(cmd)
+            rows = curPub.fetchall()
+            for row in rows:
+                tDict = {}
+                date_good = True
+                for h, r in zip(txPubDBheaders, row):
+                    if h == 'timeset' and start_date != None and end_date != None:
+                        # print(r) #2020-01-25 19:13:17.731529
+                        if r.date() > end_date or r.date() < start_date:
+                            date_good = False
+                    tDict[h] = r
+                if not date_good:
+                    continue
+
+                if tDict['source'] in txnPubDict.keys():
+                    txnPubDict[tDict['source']].append(tDict)
+                else:
+                    txnPubDict.update({tDict['source']: [tDict]})
+
+                if tDict['target'] in txnPubDict.keys():
+                    txnPubDict[tDict['target']].append(tDict)
+                else:
+                    txnPubDict.update({tDict['target']: [tDict]})
+
+            if len(rows) == 0:
+                break
+
+            print("p", end=" ", flush=True)
+            #print("Public credit bulk offset: " + str(offset) + " results " + str(len(rows)))
+            offset += step
+
+        # get all unique transactions
+        tx_hash = []
+        unique_pub_tx_hash = []
+        totalTxns = 0
+        uniqueTxns = 0
+        printDotsChunks = 10000
+        printDots = 0
+        print("Public Views Finding unique transactions . = ", printDotsChunks)
+        for tnsfer_acct__id, transactions in txnPubDict.items():
+            #print("transactions", transactions)
+            for t in transactions:
+                #print("t", t)
+                totalTxns += 1
+                if t['task_uuid'] not in tx_hash:  # note that without this there will be double counting on transactions
+                    tx_hash.append(t['task_uuid'])
+                    unique_pub_tx_hash.append(t)
+                    uniqueTxns += 1
+                printDots += 1
+                # print(printDots, end=" ")
+                if printDots > printDotsChunks:
+                    print(".", end=" ", flush=True)
+                    printDots = 0
+
+        print("Found in public Views: ", totalTxns, " Unique: ", uniqueTxns)
 
     return {'headers':txDBheaders, 'data': txnDict, 'unique_txns': unique_tx_hash}
 
@@ -954,6 +1037,10 @@ for user, data in userData.items():
     tDict = data
     tDict.update({'ptot_out_unique_at': userPercentage})
     tDict.update({'ptot_out_unique_at_group': groupPercentage})
+
+    tDict.update({'user_url': "https://admin.sarafu.network/users/"+str(data['id'])})
+    tDict.update({'user_accounts_url': "https://admin.sarafu.network/accounts/"+str(data['transfer_account_id'])})
+
     userData[user] = tDict
 
     in_and_out = 0
@@ -968,6 +1055,9 @@ for user, data in userData.items():
 userHeaders.extend(['ptot_out_unique_at'])
 userHeaders.extend(['ptot_out_unique_at_group'])
 userHeaders.extend(['max_out'])
+userHeaders.extend(['user_url'])
+userHeaders.extend(['user_accounts_url'])
+
 
 '''
 userConfidenceDict = {}
