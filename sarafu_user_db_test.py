@@ -4,6 +4,7 @@ import os
 import psycopg2
 import getopt
 import sys
+import math
 import copy
 import csv
 import time
@@ -614,6 +615,8 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
     offset = 0
     step = 6000
     unique_tx_hash = []
+    lastTradeOut = {}
+    lastTradeIn = {}
 
     while True:#rows_eth.len()>0:
 
@@ -653,13 +656,25 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
             unique_tx_hash.append(tDict)
             if tDict['sender_user_id'] in txnDict.keys():
                 txnDict[tDict['sender_user_id']].append(tDict)
+                if tDict['sender_user_id'] in lastTradeOut.keys():
+                    if tDict['created'].date() > lastTradeOut[tDict['sender_user_id']].date():
+                        lastTradeOut[tDict['sender_user_id']] = tDict['created']
+                else:
+                    lastTradeOut.update({tDict['sender_user_id']: tDict['created']})
             else:
                 txnDict.update({tDict['sender_user_id']: [tDict]})
+                lastTradeOut.update({tDict['sender_user_id']: tDict['created']})
 
             if tDict['recipient_user_id'] in txnDict.keys():
                 txnDict[tDict['recipient_user_id']].append(tDict)
+                if tDict['recipient_user_id'] in lastTradeIn.keys():
+                    if tDict['created'].date() > lastTradeIn[tDict['recipient_user_id']].date():
+                        lastTradeIn[tDict['recipient_user_id']] = tDict['created']
+                else:
+                    lastTradeIn.update({tDict['recipient_user_id']: tDict['created']})
             else:
                 txnDict.update({tDict['recipient_user_id']: [tDict]})
+                lastTradeIn.update({tDict['recipient_user_id']: tDict['created']})
 
         if len(rows) == 0:
             break
@@ -769,7 +784,7 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
 
         print("Found in public Views: ", totalTxns, " Unique: ", uniqueTxns)
 
-    return {'headers':txDBheaders, 'data': txnDict, 'unique_txns': unique_tx_hash}
+    return {'headers':txDBheaders, 'data': txnDict, 'unique_txns': unique_tx_hash, 'lastTradeOut': lastTradeOut, 'lastTradeIn': lastTradeIn}
 
 
 
@@ -933,6 +948,8 @@ tResult = get_txns_acct_txns(conn, eth_conn, start_date, end_date)
 txHeaders = tResult['headers']
 txnData = tResult['data']
 unique_txnData = tResult['unique_txns']
+lastTradeOut = tResult['lastTradeOut']
+lastTradeIn = tResult['lastTradeIn']
 
 uResult = get_user_info(conn,private=private)
 userHeaders = uResult['headers']
@@ -986,10 +1003,12 @@ for user in userData.keys():
                             sunique_txns_out+=1
                             if(trans['_transfer_amount_wei']>=min_size):
                                 sunique_txns_out_atleast += 1
-                                stotal_unique_txns_out_atleast += 1
+                                if sunique_txns_out_atleast > 1:
+                                    stotal_unique_txns_out_atleast += 1
                                 if userData[user]['_held_roles'] == "GROUP_ACCOUNT":
                                     sunique_txns_out_atleast_group += 1
-                                    stotal_unique_txns_out_atleast_group += 1
+                                    if sunique_txns_out_atleast_group > 1:
+                                        stotal_unique_txns_out_atleast_group += 1
 
 
                else:
@@ -1029,34 +1048,68 @@ userHeaders.extend(['svol_in','svol_out','stxns_in','stxns_out','sunique_in','su
 for user, data in userData.items():
     userPercentage = 0
     groupPercentage = 0
+    total_user_reward = 100000
+    total_group_reward = 100000
+    max_user_reward = 0
+    max_group_reward = 0
     if stotal_unique_txns_out_atleast > 0:
-        userPercentage = data['sunique_out_at'] / stotal_unique_txns_out_atleast
+        if data['sunique_out_at'] > 1:
+            userPercentage = data['sunique_out_at'] / stotal_unique_txns_out_atleast
     if stotal_unique_txns_out_atleast_group > 0:
-        groupPercentage = data['sunique_out_at_group'] / stotal_unique_txns_out_atleast_group
+        if data['sunique_out_at_group'] > 1:
+            groupPercentage = data['sunique_out_at_group'] / stotal_unique_txns_out_atleast_group
+
+    max_user_reward = int(total_user_reward * userPercentage)
+    max_group_reward = int(total_group_reward * groupPercentage)
+
 
     tDict = data
     tDict.update({'ptot_out_unique_at': userPercentage})
     tDict.update({'ptot_out_unique_at_group': groupPercentage})
+    tDict.update({'user_reward': max_user_reward})
+    tDict.update({'group_reward': max_group_reward})
 
     tDict.update({'user_url': "https://admin.sarafu.network/users/"+str(data['id'])})
     tDict.update({'user_accounts_url': "https://admin.sarafu.network/accounts/"+str(data['transfer_account_id'])})
 
     userData[user] = tDict
 
-    in_and_out = 0
-    in_and_out = data['svol_out']
+    #in_and_out = 0
+    #in_and_out = data['svol_out']
 
-    max_out = 0
-    max_out = min([int(data['_balance_wei'] / 2), data['svol_out']])
-    tDict = data
-    tDict.update({'max_out':max_out})
+    days_since = 0
+    if user in lastTradeOut.keys():
+        tDict.update({'last_trade_out': lastTradeOut[user]})
+        days_since = (Date.today() - lastTradeOut[user].date()).days
+        tDict.update({'last_trade_out_days': days_since})
+    else:
+        tDict.update({'last_trade_out': userData[user]['created']})
+        days_since = (Date.today() - userData[user]['created'].date()).days
+        tDict.update({'last_trade_out_days': days_since})
+    if user in lastTradeIn.keys():
+        tDict.update({'last_trade_in': lastTradeIn[user]})
+    else:
+        tDict.update({'last_trade_in': 'None'})
+
+    monthly_fee = 80
+    max_fee = 0
+    if days_since > 0 and data['_balance_wei'] > 0:
+        max_fee = min([int(data['_balance_wei']), int(monthly_fee*math.floor(days_since/30))])
+    # tDict = data
+    tDict.update({'max_fee': max_fee})
+
     userData[user]=tDict
 
 userHeaders.extend(['ptot_out_unique_at'])
+userHeaders.extend(['user_reward'])
 userHeaders.extend(['ptot_out_unique_at_group'])
-userHeaders.extend(['max_out'])
+userHeaders.extend(['group_reward'])
 userHeaders.extend(['user_url'])
 userHeaders.extend(['user_accounts_url'])
+userHeaders.extend(['last_trade_out'])
+userHeaders.extend(['last_trade_out_days'])
+userHeaders.extend(['max_fee'])
+userHeaders.extend(['last_trade_in'])
 
 
 '''
