@@ -617,6 +617,7 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
     unique_tx_hash = []
     lastTradeOut = {}
     lastTradeIn = {}
+    firstTradeIn = {}
 
     while True:#rows_eth.len()>0:
 
@@ -665,6 +666,9 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
                 txnDict.update({tDict['sender_user_id']: [tDict]})
                 lastTradeOut.update({tDict['sender_user_id']: tDict['created']})
 
+            #else:
+            #txnDict.update({tDict['recipient_user_id']: [tDict]})
+
             if tDict['recipient_user_id'] in txnDict.keys():
                 txnDict[tDict['recipient_user_id']].append(tDict)
                 if tDict['recipient_user_id'] in lastTradeIn.keys():
@@ -675,6 +679,19 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
             else:
                 txnDict.update({tDict['recipient_user_id']: [tDict]})
                 lastTradeIn.update({tDict['recipient_user_id']: tDict['created']})
+
+            if tDict['recipient_user_id'] in firstTradeIn.keys():
+                if tDict['created'].date() < firstTradeIn[tDict['recipient_user_id']]['created'].date():
+                    if tDict['transfer_subtype'] == 'STANDARD':
+                        firstTradeIn[tDict['recipient_user_id']] = tDict
+
+
+            else:
+                if tDict['transfer_subtype'] == 'STANDARD':
+                    firstTradeIn.update({tDict['recipient_user_id']: tDict})
+
+                #lastTradeIn.update({tDict['recipient_user_id']: tDict['created']})
+                #firstTradeIn.update({tDict['recipient_user_id']: tDict})
 
         if len(rows) == 0:
             break
@@ -784,7 +801,7 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
 
         print("Found in public Views: ", totalTxns, " Unique: ", uniqueTxns)
 
-    return {'headers':txDBheaders, 'data': txnDict, 'unique_txns': unique_tx_hash, 'lastTradeOut': lastTradeOut, 'lastTradeIn': lastTradeIn}
+    return {'headers':txDBheaders, 'data': txnDict, 'unique_txns': unique_tx_hash, 'lastTradeOut': lastTradeOut, 'lastTradeIn': lastTradeIn, 'firstTradeIn': firstTradeIn}
 
 
 
@@ -950,6 +967,7 @@ txnData = tResult['data']
 unique_txnData = tResult['unique_txns']
 lastTradeOut = tResult['lastTradeOut']
 lastTradeIn = tResult['lastTradeIn']
+firstTradeIn = tResult['firstTradeIn']
 
 uResult = get_user_info(conn,private=private)
 userHeaders = uResult['headers']
@@ -1078,6 +1096,7 @@ for user, data in userData.items():
     #in_and_out = data['svol_out']
 
     days_since = 0
+    days_since_recieved = 0
     if user in lastTradeOut.keys():
         tDict.update({'last_trade_out': lastTradeOut[user]})
         days_since = (Date.today() - lastTradeOut[user].date()).days
@@ -1088,8 +1107,28 @@ for user, data in userData.items():
         tDict.update({'last_trade_out_days': days_since})
     if user in lastTradeIn.keys():
         tDict.update({'last_trade_in': lastTradeIn[user]})
+        # we want the 1st trade into them that is not an admin
     else:
         tDict.update({'last_trade_in': 'None'})
+
+    if user in firstTradeIn.keys() and userData[user]['created'].date()>=start_date:
+        sender_id = firstTradeIn[user]['sender_user_id']
+        tDict.update({'first_trade_in_user': sender_id })
+        tDict.update({'first_trade_in_time': firstTradeIn[user]['created']})
+        if sender_id in userData.keys():
+            tDict.update({'first_trade_in_role': userData[sender_id]['_held_roles']})
+            tDict.update({'first_trade_in_sphone': userData[sender_id]['_phone']})
+            tDict.update({'first_trade_in_tphone': userData[user]['_phone']})
+        else:
+            print("no way dude", firstTradeIn[user])
+
+        # we want the 1st trade into them that is not an admin
+    else:
+        tDict.update({'first_trade_in_user': 'None'})
+        tDict.update({'first_trade_in_time': 'None'})
+        tDict.update({'first_trade_in_role': 'None'})
+        tDict.update({'first_trade_in_sphone': 'None'})
+        tDict.update({'first_trade_in_tphone': 'None'})
 
     monthly_fee = 80
     max_fee = 0
@@ -1110,6 +1149,12 @@ userHeaders.extend(['last_trade_out'])
 userHeaders.extend(['last_trade_out_days'])
 userHeaders.extend(['max_fee'])
 userHeaders.extend(['last_trade_in'])
+
+userHeaders.extend(['first_trade_in_user'])
+userHeaders.extend(['first_trade_in_role'])
+userHeaders.extend(['first_trade_in_time'])
+userHeaders.extend(['first_trade_in_sphone'])
+userHeaders.extend(['first_trade_in_tphone'])
 
 
 '''
