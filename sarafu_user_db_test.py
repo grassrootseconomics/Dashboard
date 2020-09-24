@@ -11,7 +11,7 @@ import time
 from toolkit import Date
 from datetime import timedelta
 from network_viz import output_Network_Viz
-# process input params
+# process input params 1
 opts, _ = getopt.getopt(sys.argv[1:], 'a:h:u:p:', ['public'])
 
 start_date = None 
