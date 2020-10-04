@@ -10,6 +10,9 @@ import csv
 import time
 from toolkit import Date
 from datetime import timedelta
+import networkx as nx
+from network_viz import toGraph
+
 from network_viz import output_Network_Viz
 # process input params 1
 opts, _ = getopt.getopt(sys.argv[1:], 'a:h:u:p:', ['public'])
@@ -75,7 +78,7 @@ GE_community_token_id_map = {
     8: "Miyani", 9: "Olympic", 10: "Takaungu", 11: "Congo", 12: "Sarafu", 13: "Nairobi", 14: "Mkanyeni",
     15: "Mnyenzeni", 16: "Grassroots", 17: "Chigato"}
 
-def generate_user_and_transaction_data_github_csv(txnData,userData,unique_txnData,private=False):
+def generate_user_and_transaction_data_github_csv(txnData,userData,unique_txnData,start_date, end_date, days_ago_str, private=False, ):
 
     headersTxPriv = ['id', 'timeset', 'transfer_subtype', 'transfer_use', 'source', 's_email', 's_first_name', 's_last_name', 's_phone', 's_comm_tkn', 's_gender', 's_location_path', 's_location_lat','s_location_lon',
                's_business_type', 's_directory', 'target', 't_email', 't_first_name', 't_last_name', 't_phone', 't_comm_tkn', 't_gender',
@@ -106,14 +109,14 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,unique_txnDat
 
     headersUser=headersUserPriv
     headersTx = headersTxPriv
-    filenameTx = 'tx_all_private_'+days_ago_str+'.csv'
-    filenameUser = 'users_all_private_'+days_ago_str+'.csv'
+    filenameTx = 'tx_all_private_'+start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_ago_str+'.csv'
+    filenameUser = 'users_all_private_'+start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_ago_str+'.csv'
 
     if not private:
         headersUser = headersUserPub
         headersTx = headersTxPub
-        filenameTx = 'tx_all_pub_'+days_ago_str+'.csv'
-        filenameUser = 'users_all_pub_'+days_ago_str+'.csv'
+        filenameTx = 'tx_all_pub_'+start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_ago_str+'.csv'
+        filenameUser = 'users_all_pub_'+start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_ago_str+'.csv'
 
     print("saving all transactions to: ", filenameTx)
     print("saving all users to: ", filenameUser)
@@ -328,7 +331,7 @@ def generate_chama_data(txnData, userData, start_date=None, end_date=None):
 
     return None
 
-def generate_transaction_data_svg(txnData, userData, unique_txnData, start_date=None, end_date=None):
+def generate_transaction_data_svg(txnData, userData, unique_txnData, start_date, end_date, days_ago_str):
 
     days = 0
     days_str = ""
@@ -350,7 +353,7 @@ def generate_transaction_data_svg(txnData, userData, unique_txnData, start_date=
 
         days = (end_date - start_date).days + 1
         days_str = str(days - 1)+"days"
-    fileName = "trade_txdata_" + days_str + ".svg"
+    fileName = "trade_txdata_" +start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_ago_str+'.png'
 
     cumu = False
 
@@ -801,7 +804,31 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
 
         print("Found in public Views: ", totalTxns, " Unique: ", uniqueTxns)
 
-    return {'headers':txDBheaders, 'data': txnDict, 'unique_txns': unique_tx_hash, 'lastTradeOut': lastTradeOut, 'lastTradeIn': lastTradeIn, 'firstTradeIn': firstTradeIn}
+
+    days = 0
+    days_str = ""
+    if start_date == None or end_date == None:
+        earlyDate = Date().n_days_ahead(days=2)
+        lateDate = Date().n_days_ago(days=2000)
+        nend_date = Date().today()
+        if True: #for u, trans in txnData.items():
+            for t in unique_tx_hash:
+                if t['created'].date() < earlyDate:
+                    earlyDate = t['created'].date()
+                if t['created'].date() > lateDate:
+                    lateDate = t['created'].date()
+        start_date = earlyDate
+        end_date = lateDate
+        days = (end_date - start_date).days + 1
+        days_str = "all_time"
+
+    else:
+
+        days_diff = (end_date - start_date).days + 1
+        days_str = str(days_diff - 1) + "days"
+
+
+    return {'headers':txDBheaders, 'data': txnDict, 'unique_txns': unique_tx_hash, 'lastTradeOut': lastTradeOut, 'lastTradeIn': lastTradeIn, 'firstTradeIn': firstTradeIn, 'startDate': start_date, 'endDate': end_date, 'daysStr':days_str}
 
 
 
@@ -968,6 +995,9 @@ unique_txnData = tResult['unique_txns']
 lastTradeOut = tResult['lastTradeOut']
 lastTradeIn = tResult['lastTradeIn']
 firstTradeIn = tResult['firstTradeIn']
+start_date = tResult['startDate']
+end_date = tResult['endDate']
+days_ago_str = tResult['daysStr']
 
 uResult = get_user_info(conn,private=private)
 userHeaders = uResult['headers']
@@ -999,7 +1029,7 @@ for user in userData.keys():
 
 
 
-    min_size = 20
+    min_size = 5
 
     sseenUsers = []
     seenUsers = []
@@ -1063,6 +1093,19 @@ for user in userData.keys():
 userHeaders.extend(['ovol_in','ovol_out','otxns_in','otxns_out','ounique_in','ounique_out'])
 userHeaders.extend(['svol_in','svol_out','stxns_in','stxns_out','sunique_in','sunique_out','sunique_in_at','sunique_out_at','sunique_out_at_group'])
 
+print("Calulating Clusters....")
+G = toGraph(unique_txnData, userData, start_date, end_date,private)
+Gc = nx.clustering(G)
+
+for usr, val in Gc.items():
+    if usr in userData.keys():
+        tDict = userData[usr]
+        tDict.update({'cluster_coef': val})
+        userData[user] = tDict
+
+userHeaders.extend(['cluster_coef'])
+
+
 for user, data in userData.items():
     userPercentage = 0
     groupPercentage = 0
@@ -1070,12 +1113,16 @@ for user, data in userData.items():
     total_group_reward = 100000
     max_user_reward = 0
     max_group_reward = 0
+    unique_user_x_clustering = 0
+    unique_group_x_clustering = 0
     if stotal_unique_txns_out_atleast > 0:
         if data['sunique_out_at'] > 1:
             userPercentage = data['sunique_out_at'] / stotal_unique_txns_out_atleast
+            unique_user_x_clustering = userPercentage * data['cluster_coef']
     if stotal_unique_txns_out_atleast_group > 0:
         if data['sunique_out_at_group'] > 1:
             groupPercentage = data['sunique_out_at_group'] / stotal_unique_txns_out_atleast_group
+            unique_group_x_clustering = groupPercentage * data['cluster_coef']
 
     max_user_reward = int(total_user_reward * userPercentage)
     max_group_reward = int(total_group_reward * groupPercentage)
@@ -1086,6 +1133,9 @@ for user, data in userData.items():
     tDict.update({'ptot_out_unique_at_group': groupPercentage})
     tDict.update({'user_reward': max_user_reward})
     tDict.update({'group_reward': max_group_reward})
+
+    tDict.update({'unique_user_x_clustering': unique_user_x_clustering})
+    tDict.update({'unique_group_x_clustering': unique_group_x_clustering})
 
     tDict.update({'user_url': "https://admin.sarafu.network/users/"+str(data['id'])})
     tDict.update({'user_accounts_url': "https://admin.sarafu.network/accounts/"+str(data['transfer_account_id'])})
@@ -1111,16 +1161,31 @@ for user, data in userData.items():
     else:
         tDict.update({'last_trade_in': 'None'})
 
-    if user in firstTradeIn.keys() and userData[user]['created'].date()>=start_date:
-        sender_id = firstTradeIn[user]['sender_user_id']
-        tDict.update({'first_trade_in_user': sender_id })
-        tDict.update({'first_trade_in_time': firstTradeIn[user]['created']})
-        if sender_id in userData.keys():
-            tDict.update({'first_trade_in_role': userData[sender_id]['_held_roles']})
-            tDict.update({'first_trade_in_sphone': userData[sender_id]['_phone']})
-            tDict.update({'first_trade_in_tphone': userData[user]['_phone']})
+
+
+    if user in firstTradeIn.keys():
+        if start_date != None:
+            if userData[user]['created'].date()>=start_date:
+                sender_id = firstTradeIn[user]['sender_user_id']
+                tDict.update({'first_trade_in_user': sender_id})
+                tDict.update({'first_trade_in_time': firstTradeIn[user]['created']})
+                if sender_id in userData.keys():
+                    tDict.update({'first_trade_in_role': userData[sender_id]['_held_roles']})
+                    tDict.update({'first_trade_in_sphone': userData[sender_id]['_phone']})
+                    tDict.update({'first_trade_in_tphone': userData[user]['_phone']})
+                else:
+                    print("no way dude", firstTradeIn[user])
         else:
-            print("no way dude", firstTradeIn[user])
+            sender_id = firstTradeIn[user]['sender_user_id']
+            tDict.update({'first_trade_in_user': sender_id})
+            tDict.update({'first_trade_in_time': firstTradeIn[user]['created']})
+            if sender_id in userData.keys():
+                tDict.update({'first_trade_in_role': userData[sender_id]['_held_roles']})
+                tDict.update({'first_trade_in_sphone': userData[sender_id]['_phone']})
+                tDict.update({'first_trade_in_tphone': userData[user]['_phone']})
+            else:
+                print("no way dude", firstTradeIn[user])
+
 
         # we want the 1st trade into them that is not an admin
     else:
@@ -1140,8 +1205,10 @@ for user, data in userData.items():
     userData[user]=tDict
 
 userHeaders.extend(['ptot_out_unique_at'])
+userHeaders.extend(['unique_user_x_clustering'])
 userHeaders.extend(['user_reward'])
 userHeaders.extend(['ptot_out_unique_at_group'])
+userHeaders.extend(['unique_group_x_clustering'])
 userHeaders.extend(['group_reward'])
 userHeaders.extend(['user_url'])
 userHeaders.extend(['user_accounts_url'])
@@ -1155,7 +1222,6 @@ userHeaders.extend(['first_trade_in_role'])
 userHeaders.extend(['first_trade_in_time'])
 userHeaders.extend(['first_trade_in_sphone'])
 userHeaders.extend(['first_trade_in_tphone'])
-
 
 '''
 userConfidenceDict = {}
@@ -1194,17 +1260,14 @@ for user, data in userData.items():
 userHeaders.extend(['confidence'])
 '''
 
-generate_user_and_transaction_data_github_csv(txnData,userData,unique_txnData,private=private)
-
-nstart_date = start_date
-nend_date = end_date
+generate_user_and_transaction_data_github_csv(txnData,userData,unique_txnData,start_date,end_date,days_ago_str,private=private)
 
 
 if True:
     kept_headers = []
-    filename = 'sarafu_user_data_all_admin_private_'+days_ago_str+'.csv'
+    filename = 'sarafu_user_data_all_admin_private_'+start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_ago_str+'.csv'
     if private == False:
-        filename = 'sarafu_user_data_all_admin_pub_'+days_ago_str+'.csv'
+        filename = 'sarafu_user_data_all_admin_pub_'+start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_ago_str+'.csv'
     with open(filename, 'w',newline='') as csvfile:
         writerT = csv.writer(csvfile)
 
@@ -1218,6 +1281,5 @@ if True:
                 #writerT.writerow([str(user_data.get(attr, '')).strip('"') for attr in userHeaders])
 
 
-
-generate_transaction_data_svg(txnData, userData, unique_txnData, nstart_date, nend_date)
-#output_Network_Viz(txnData, userData,nstart_date, nend_date,private)
+generate_transaction_data_svg(txnData, userData, unique_txnData, start_date, end_date, days_ago_str)
+output_Network_Viz(G, userData, start_date, end_date, days_ago_str)

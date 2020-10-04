@@ -3,7 +3,9 @@ from matplotlib import rcParams
 from toolkit import Date, DateTime
 import networkx as nx
 import random
+import csv
 import math
+import operator
 
 
 rcParams.update({'figure.autolayout': True})
@@ -328,34 +330,9 @@ def getPoint(tier):
     return {'x': x, 'y': y, 'z': z}
 
 
-#//////////////////////////////////////////////////////////////////////////////////////////////////
-def output_Network_Viz(txnData, userData, start_date = None, end_date=None,private=False):
-
-    days = 0
-    days_str = ""
-    if start_date == None:
-        earlyDate = Date().n_days_ahead(days=2)
-        lateDate = Date().n_days_ago(days=2000)
-        nend_date = Date().today()
-        for u, trans in txnData.items():
-            for t in trans:
-                if t['created'].date() < earlyDate:
-                    earlyDate = t['created'].date()
-                if t['created'].date() > lateDate:
-                    lateDate = t['created'].date()
-        start_date = earlyDate
-        end_date = lateDate
-        days = (end_date - start_date).days + 1
-        days_str = "all_time"
-
-    else:
-
-        days = (end_date - start_date).days + 1
-        days_str = str(days - 1)+"days"
-
+def toGraph(txnData, userData, start_date = None, end_date=None,private=False):
 
     token_transactions = txnData
-
     transactions = token_transactions
 
     nodes = dict()
@@ -363,15 +340,15 @@ def output_Network_Viz(txnData, userData, start_date = None, end_date=None,priva
     line_weights = dict()
 
     tx_hash=[]
-    for tnsfer_acct__id, trans in transactions.items():
+    if True: #for tnsfer_acct__id, trans in transactions.items():
 
 
-        for t in trans:
+        for t in transactions:
 
-            hash = t['blockchain_task_uuid']
-            if hash in tx_hash:
-                continue
-            tx_hash.append(hash)
+            #hash = t['blockchain_task_uuid']
+            #if hash in tx_hash:
+            #    continue
+            #tx_hash.append(hash)
 
             if t['transfer_subtype'] != 'STANDARD':
                 continue
@@ -390,14 +367,14 @@ def output_Network_Viz(txnData, userData, start_date = None, end_date=None,priva
             to_key = recipient_user_id
             from_key = sender_user_id
 
-            key = (from_key, to_key) \
-                if from_key < to_key \
-                else (to_key, from_key)
+            key = (from_key, to_key)# \
+                #if from_key < to_key \
+                #else (to_key, from_key)
 
             if key not in line_weights:
-                line_weights[key] = trade_amt
+                line_weights[key] = 1#trade_amt
             else:
-                line_weights[key] += trade_amt
+                line_weights[key] += 1#trade_amt
 
     G = nx.DiGraph()  # nx.karate_club_graph() #    G = nx.karate_club_graph() #
 
@@ -410,40 +387,103 @@ def output_Network_Viz(txnData, userData, start_date = None, end_date=None,priva
             s_directory = userData[sender_user_id].get('bio', '').strip('"')
             s_gender = userData[sender_user_id].get('gender', '').strip('"')
             s_business_type = userData[sender_user_id].get('_name', '')
+            s_location = userData[sender_user_id].get('_location', '')
 
-            G.add_node(sender_user_id,directory=s_directory,gender=s_gender,biz_type=s_business_type,label=s_first_name+"_"+s_last_name+"_"+s_phone)
+            G.add_node(sender_user_id,directory=s_directory,gender=s_gender,biz_type=s_business_type,first_name=s_first_name,last_name=s_last_name,phone=s_phone,label=sender_user_id,location=s_location)
 
-            t_first_name = userData[recipient_user_id].get('first_name', '')
-            t_last_name = userData[recipient_user_id].get('last_name', '')
-            t_phone = userData[recipient_user_id].get('_phone', '')
+            t_first_name = userData[recipient_user_id].get('first_name', "_")
+            t_last_name = userData[recipient_user_id].get('last_name', "_")
+            t_phone = userData[recipient_user_id].get('_phone', "_")
             t_directory = userData[recipient_user_id].get('bio', '').strip('"')
             t_gender = userData[recipient_user_id].get('gender', '').strip('"')
             t_business_type = userData[recipient_user_id].get('_name', '')
+            t_location = userData[recipient_user_id].get('_location', '')
 
-            G.add_node(recipient_user_id,directory=t_directory,gender=t_gender,biz_type=t_business_type,label=t_first_name+"_"+t_last_name+"_"+t_phone)
+            G.add_node(recipient_user_id,directory=t_directory,gender=t_gender,biz_type=t_business_type,first_name=t_first_name,last_name=t_last_name,phone=t_phone,label=recipient_user_id,location=t_location)
 
+    return G
+#//////////////////////////////////////////////////////////////////////////////////////////////////
+def output_Network_Viz(G, userData, start_date,end_date,days_ago_str):
+    print("NetworkVis....")
+    #G  = toGraph(txnData, userData, start_date, end_date,private)
+
+    #print("Clustering")
+    #Gc = nx.clustering(G)
+    #print(Gc)
     #G.remove_nodes_from(remove)
     #G = nx.random_geometric_graph(200, 0.125)
 
 
 
-    d = list(nx.weakly_connected_components(G))
+    d = list(nx.strongly_connected_components(G))
     largest_sub_graph = None
     size_of_largest = 0
+    user_data_new = []
     sub_graphs = []
     print_graphs = []
-    for sub_graph in d:
-        if len(list(sub_graph)) > 3 and len(list(sub_graph)) < 200:
-            #print(len(list(sub_graph))," sub_graph:",end='')
-            print_graphs.append(sub_graph)
-            #for usr in sub_graph:
-            #    print(userData[usr].get('first_name', '')+", "+userData[usr].get('last_name', '')+", "+userData[usr].get('_phone', '')+", "+userData[usr].get('bio', '').strip('"')+" ",end='')
-            #print(" ")
-        if len(list(sub_graph)) > size_of_largest:
-            size_of_largest = len(list(sub_graph))
-            largest_sub_graph = list(sub_graph)
 
-    #Gc = removeFromGraph(G.copy(),largest_sub_graph)
+    filename = 'sarafu_network_data_all_admin_pub_'+start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_ago_str+'.csv'
+    with open(filename, 'w',newline='') as csvfile:
+        writerT = csv.writer(csvfile)
+        userHeaders = ["cluster_nodes", "male", "female", "unknown", "volume", "location", "location_strength", "clustering"]
+        writerT.writerow(userHeaders)
+        #print("cluster_nodes", ",",  "male", ",", " female", ",", " unknown",  ",", "volume", ",", "location", ",", "location_strength", ",", "clustering")
+        #print(userHeaders) #debug
+
+
+
+        for sub_graph in d:
+            if len(list(sub_graph)) > 1:
+                Ga = removeFromGraph(G.copy(), sub_graph)
+                clustering = nx.average_clustering(Ga)
+                num_male = 0
+                num_female = 0
+                num_unknown = 0
+                locations = {}
+                for node in Ga.nodes():
+                    zgender = userData[node].get('gender', '').strip('"')
+                    zlocation = userData[node].get('_location', '')
+                    if zlocation not in locations.keys():
+                        locations.update({zlocation: 1})
+                    else:
+                        locations[zlocation] = locations[zlocation]+1
+
+                    if zgender == "female":
+                        num_female +=1
+                    elif zgender == "male":
+                        num_male +=1
+                    else:
+                        num_female +=1
+                total_weight = 0
+                #total_txn = 0
+                for edge in Ga.edges():
+                    #print("test: ",edge)
+                    total_weight += Ga.get_edge_data(edge[0],edge[1])['weight']
+                    #total_txn += Ga.get_edge_data(edge[0], edge[1])['txn']
+                #print("sub_graph size: ", len(list(sub_graph)), " male: ", num_male,  " female: ", num_female,  " unknown: ", num_unknown, " total weight: ", total_weight)
+                sorted_locs = sorted(locations.items(), key=lambda x: x[1], reverse=True)
+
+                    # writerT.writerow([str(user_data.get(attr, '')).strip('"') for attr in userHeaders])
+                networkData = {"cluster_nodes":len(list(sub_graph)), "male":num_male, "female":num_female, "unknown":num_unknown, "volume":total_weight, "location":sorted_locs[0][0], "location_strength":sorted_locs[0][1], "clustering":clustering}
+                #print(len(list(sub_graph)), ",", num_male, ",", num_female, ",", num_unknown,  ",", total_weight,",",
+                #      sorted_locs[0][0], "," , sorted_locs[0][1], ",", clustering)
+                zRow = list()
+                for attr in networkData:
+                    zRow.append(str(networkData.get(attr, '')).strip('"'))
+                writerT.writerow(zRow)
+
+            if len(list(sub_graph)) > 3 and len(list(sub_graph)) < 1000:
+                #print(len(list(sub_graph))," sub_graph:",end='')
+                print_graphs.append(sub_graph)
+                #for usr in sub_graph:
+                #    print(userData[usr].get('first_name', '')+", "+userData[usr].get('last_name', '')+", "+userData[usr].get('_phone', '')+", "+userData[usr].get('bio', '').strip('"')+" ",end='')
+                #print(" ")
+            if len(list(sub_graph)) > size_of_largest:
+                size_of_largest = len(list(sub_graph))
+                largest_sub_graph = list(sub_graph)
+
+    print("****saved all network info to csv: ", filename, "***")
+        #Gc = removeFromGraph(G.copy(),largest_sub_graph)
     #gephiName= "test5.gexf"
 
 
@@ -451,7 +491,9 @@ def output_Network_Viz(txnData, userData, start_date = None, end_date=None,priva
 
     #nx.write_gexf(Gc, gephiName)
 
-    displayGraphs(G,print_graphs, userData,private,days_str)
-    if size_of_largest < 1000:
-        displayGraphs(G,[largest_sub_graph], userData,private,days_str)
+    #displayGraphs(G,print_graphs, userData,False,"_misc")
+    #if size_of_largest < 1000:
+    #    displayGraphs(G,[largest_sub_graph], userData,False,"_misc")
 
+    #return a dicts of users and their cluster coefs
+    return
