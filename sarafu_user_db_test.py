@@ -7,6 +7,7 @@ import sys
 import math
 import copy
 import csv
+import progressbar
 import time
 from toolkit import Date
 from datetime import timedelta
@@ -14,6 +15,8 @@ import networkx as nx
 from network_viz import toGraph
 
 from network_viz import output_Network_Viz
+from network_viz import get_Network_Viz_Monthly
+
 # process input params 1
 opts, _ = getopt.getopt(sys.argv[1:], 'a:h:u:p:', ['public'])
 
@@ -109,8 +112,8 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,unique_txnDat
 
     headersUser=headersUserPriv
     headersTx = headersTxPriv
-    filenameTx = 'tx_all_private_'+start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_ago_str+'.csv'
-    filenameUser = 'users_all_private_'+start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_ago_str+'.csv'
+    filenameTx = './data/tx_all_private_'+start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_ago_str+'.csv'
+    filenameUser = './data/users_all_private_'+start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_ago_str+'.csv'
 
     if not private:
         headersUser = headersUserPub
@@ -326,34 +329,12 @@ def highlight_datetimes(dates,indices, ax):
         ax.axvspan(dates[indices[i]], dates[indices[i] + 1], facecolor='blue', edgecolor='none', alpha=.2)
         i += 1
 
-#The goal here is to identify people whoa re sending to chamas (possibly put this as a filter inside the User table)
-def generate_chama_data(txnData, userData, start_date=None, end_date=None):
 
-    return None
+def generate_transaction_data_svg(txnData, userData, unique_txnData, start_date, end_date, days_ago_str, days_ago):
 
-def generate_transaction_data_svg(txnData, userData, unique_txnData, start_date, end_date, days_ago_str):
-
-    days = 0
-    days_str = ""
-    if start_date == None:
-        earlyDate = Date().n_days_ahead(days=2)
-        lateDate = Date().n_days_ago(days=2000)
-        nend_date = Date().today()
-        for t in unique_txnData:
-            if t['created'].date() < earlyDate:
-                earlyDate = t['created'].date()
-            if t['created'].date() > lateDate:
-                lateDate = t['created'].date()
-        start_date = earlyDate
-        end_date = lateDate
-        days = (end_date - start_date).days + 1
-        days_str = "all_time"
-
-    else:
-
-        days = (end_date - start_date).days + 1
-        days_str = str(days - 1)+"days"
-    fileName = "trade_txdata_" +start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_ago_str+'.png'
+    days = days_ago
+    days_str = days_ago_str
+    fileName = "./data/trade_txdata_" +start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_ago_str+'.png'
 
     cumu = False
 
@@ -655,11 +636,10 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
 
                 tDict[h] = r
 
-            if not date_good:
-                continue
-            unique_tx_hash.append(tDict)
             if tDict['sender_user_id'] in txnDict.keys():
-                txnDict[tDict['sender_user_id']].append(tDict)
+                if date_good:
+                    txnDict[tDict['sender_user_id']].append(tDict)
+
                 if tDict['sender_user_id'] in lastTradeOut.keys():
                     if tDict['created'].date() > lastTradeOut[tDict['sender_user_id']].date():
                         lastTradeOut[tDict['sender_user_id']] = tDict['created']
@@ -669,11 +649,13 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
                 txnDict.update({tDict['sender_user_id']: [tDict]})
                 lastTradeOut.update({tDict['sender_user_id']: tDict['created']})
 
+
             #else:
             #txnDict.update({tDict['recipient_user_id']: [tDict]})
 
             if tDict['recipient_user_id'] in txnDict.keys():
-                txnDict[tDict['recipient_user_id']].append(tDict)
+                if date_good:
+                    txnDict[tDict['recipient_user_id']].append(tDict)
                 if tDict['recipient_user_id'] in lastTradeIn.keys():
                     if tDict['created'].date() > lastTradeIn[tDict['recipient_user_id']].date():
                         lastTradeIn[tDict['recipient_user_id']] = tDict['created']
@@ -692,6 +674,9 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
             else:
                 if tDict['transfer_subtype'] == 'STANDARD':
                     firstTradeIn.update({tDict['recipient_user_id']: tDict})
+
+            if date_good:
+                unique_tx_hash.append(tDict)
 
                 #lastTradeIn.update({tDict['recipient_user_id']: tDict['created']})
                 #firstTradeIn.update({tDict['recipient_user_id']: tDict})
@@ -805,7 +790,7 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
         print("Found in public Views: ", totalTxns, " Unique: ", uniqueTxns)
 
 
-    days = 0
+    days_diff = 0
     days_str = ""
     if start_date == None or end_date == None:
         earlyDate = Date().n_days_ahead(days=2)
@@ -819,7 +804,7 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
                     lateDate = t['created'].date()
         start_date = earlyDate
         end_date = lateDate
-        days = (end_date - start_date).days + 1
+        days_diff = (end_date - start_date).days + 1
         days_str = "all_time"
 
     else:
@@ -828,7 +813,8 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
         days_str = str(days_diff - 1) + "days"
 
 
-    return {'headers':txDBheaders, 'data': txnDict, 'unique_txns': unique_tx_hash, 'lastTradeOut': lastTradeOut, 'lastTradeIn': lastTradeIn, 'firstTradeIn': firstTradeIn, 'startDate': start_date, 'endDate': end_date, 'daysStr':days_str}
+    return {'headers':txDBheaders, 'data': txnDict, 'unique_txns': unique_tx_hash, 'lastTradeOut': lastTradeOut,
+            'lastTradeIn': lastTradeIn, 'firstTradeIn': firstTradeIn, 'startDate': start_date, 'endDate': end_date, 'daysStr':days_str, 'days':days_diff}
 
 
 
@@ -998,6 +984,7 @@ firstTradeIn = tResult['firstTradeIn']
 start_date = tResult['startDate']
 end_date = tResult['endDate']
 days_ago_str = tResult['daysStr']
+days_ago = tResult['days']
 
 uResult = get_user_info(conn,private=private)
 userHeaders = uResult['headers']
@@ -1020,6 +1007,7 @@ for user in userData.keys():
     stxns_out = 0
     stxns_in = 0
     sunique_txns_out = 0
+    sunique_txns_out_group = 0
     sunique_txns_in = 0
 
     sunique_txns_out_atleast = 0
@@ -1034,9 +1022,10 @@ for user in userData.keys():
     sseenUsers = []
     seenUsers = []
 
-    if(userData[user]['id'] in txnData.keys()):
-        for trans in txnData[userData[user]['id']]:
-               if trans['sender_user_id'] == userData[user]['id']:
+
+    if(user in txnData.keys()):
+        for trans in txnData[user]:
+               if trans['sender_user_id'] == user:
                    if trans['transfer_subtype'] != 'STANDARD':
                         volume_out+=trans['_transfer_amount_wei']
                         txns_out+=1
@@ -1046,9 +1035,13 @@ for user in userData.keys():
                    else:
                         svolume_out+=trans['_transfer_amount_wei']
                         stxns_out+=1
+                        #if (user == 4082):
+                        #    print(stxns_out)
                         if trans['recipient_user_id'] not in sseenUsers:
                             sseenUsers.append(trans['recipient_user_id'])
                             sunique_txns_out+=1
+                            if userData[user]['_held_roles'] == "GROUP_ACCOUNT":
+                                sunique_txns_out_group += 1
                             if(trans['_transfer_amount_wei']>=min_size):
                                 sunique_txns_out_atleast += 1
                                 if sunique_txns_out_atleast > 1:
@@ -1083,7 +1076,7 @@ for user in userData.keys():
     txData = {'ovol_in':volume_in, 'ovol_out':volume_out,'otxns_in':txns_in,'otxns_out':txns_out,
               'ounique_in':unique_txns_in, 'ounique_out':unique_txns_out,
     'svol_in':svolume_in, 'svol_out':svolume_out,'stxns_in':stxns_in,'stxns_out':stxns_out,
-              'sunique_in':sunique_txns_in,'sunique_out':sunique_txns_out,'sunique_in_at':sunique_txns_in_atleast,
+              'sunique_in':sunique_txns_in,'sunique_out':sunique_txns_out,'sunique_out_group':sunique_txns_out_group,'sunique_in_at':sunique_txns_in_atleast,
               'sunique_out_at':sunique_txns_out_atleast,'sunique_out_at_group':sunique_txns_out_atleast_group}
 
     uDict = userData[user]
@@ -1091,51 +1084,76 @@ for user in userData.keys():
     userData[user]=uDict
 
 userHeaders.extend(['ovol_in','ovol_out','otxns_in','otxns_out','ounique_in','ounique_out'])
-userHeaders.extend(['svol_in','svol_out','stxns_in','stxns_out','sunique_in','sunique_out','sunique_in_at','sunique_out_at','sunique_out_at_group'])
+userHeaders.extend(['svol_in','svol_out','stxns_in','stxns_out','sunique_in','sunique_out'])
 
-print("Calulating Clusters....")
+print("..")
+print("..Creating Graph....")
 G = toGraph(unique_txnData, userData, start_date, end_date,private)
+
+print("Calculating Clusters....")
 Gc = nx.clustering(G)
+bar = progressbar.ProgressBar(maxval=len(list(G.nodes)), \
+    widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
+bar.start()
+sindx = 1
+if days_ago < 30:
+    for usr in list(G.nodes):
+    #for usr, val in Gc.items():
+        if usr in userData.keys():
+            #print("*", end=" ", flush=True)
+            Gnode = nx.ego_graph(G, usr, 3)
+            clustering = nx.average_clustering(Gnode)
+            tDict = userData[usr]
+            #tDict.update({'cluster_coef': val})
+            tDict.update({'cluster_coef': clustering})
+            userData[user] = tDict
+            bar.update(sindx)
+            sindx+=1
+else:
+    #for usr in list(G.nodes):
+    for usr, val in Gc.items():
+        if usr in userData.keys():
+            #print("*", end=" ", flush=True)
+            #Gnode = nx.ego_graph(G, usr, 3)
+            #clustering = nx.average_clustering(Gnode)
+            tDict = userData[usr]
+            tDict.update({'cluster_coef': val})
+            #tDict.update({'cluster_coef': clustering})
+            userData[user] = tDict
+            bar.update(sindx)
+            sindx+=1
+bar.finish()
 
-for usr, val in Gc.items():
-    if usr in userData.keys():
-        tDict = userData[usr]
-        tDict.update({'cluster_coef': val})
-        userData[user] = tDict
-
-userHeaders.extend(['cluster_coef'])
-
+min_group_balance = 20000
+totalRank = 0
+totalRank_group = 0
 
 for user, data in userData.items():
     userPercentage = 0
     groupPercentage = 0
-    total_user_reward = 100000
-    total_group_reward = 100000
-    max_user_reward = 0
-    max_group_reward = 0
     unique_user_x_clustering = 0
     unique_group_x_clustering = 0
+
+    if 'cluster_coef' in data.keys():
+        unique_user_x_clustering = data['sunique_out'] * data['cluster_coef']
+        unique_group_x_clustering = data['sunique_out_group'] * data['cluster_coef']
+        totalRank += unique_user_x_clustering
+        if data['_balance_wei']>=min_group_balance:
+            totalRank_group += unique_group_x_clustering
+
     if stotal_unique_txns_out_atleast > 0:
         if data['sunique_out_at'] > 1:
             userPercentage = data['sunique_out_at'] / stotal_unique_txns_out_atleast
-            unique_user_x_clustering = userPercentage * data['cluster_coef']
+
     if stotal_unique_txns_out_atleast_group > 0:
         if data['sunique_out_at_group'] > 1:
             groupPercentage = data['sunique_out_at_group'] / stotal_unique_txns_out_atleast_group
-            unique_group_x_clustering = groupPercentage * data['cluster_coef']
 
-    max_user_reward = int(total_user_reward * userPercentage)
-    max_group_reward = int(total_group_reward * groupPercentage)
 
 
     tDict = data
-    tDict.update({'ptot_out_unique_at': userPercentage})
-    tDict.update({'ptot_out_unique_at_group': groupPercentage})
-    tDict.update({'user_reward': max_user_reward})
-    tDict.update({'group_reward': max_group_reward})
-
-    tDict.update({'unique_user_x_clustering': unique_user_x_clustering})
-    tDict.update({'unique_group_x_clustering': unique_group_x_clustering})
+    tDict.update({'unique_out_x_clustering': unique_user_x_clustering})
+    tDict.update({'unique_out_group_x_clustering': unique_group_x_clustering})
 
     tDict.update({'user_url': "https://admin.sarafu.network/users/"+str(data['id'])})
     tDict.update({'user_accounts_url': "https://admin.sarafu.network/accounts/"+str(data['transfer_account_id'])})
@@ -1204,11 +1222,36 @@ for user, data in userData.items():
 
     userData[user]=tDict
 
-userHeaders.extend(['ptot_out_unique_at'])
-userHeaders.extend(['unique_user_x_clustering'])
+total_user_reward = 100000
+total_group_reward = 100000
+max_user_reward = 0
+max_group_reward = 0
+
+for user, data in userData.items():
+    max_group_reward = 0
+    punique_group_x_clustering = 0
+    punique_user_x_clustering = data['unique_out_x_clustering'] /totalRank
+    if data['_balance_wei']>=min_group_balance:
+        punique_group_x_clustering = data['unique_out_group_x_clustering'] / totalRank_group
+        max_group_reward = int(total_group_reward * punique_group_x_clustering)
+
+    max_user_reward = int(total_user_reward * punique_user_x_clustering)
+
+
+
+    tDict = data
+    tDict.update({'punique_out_x_clustering': punique_user_x_clustering})
+    tDict.update({'punique_out_group_x_clustering': punique_group_x_clustering})
+    tDict.update({'user_reward': max_user_reward})
+    tDict.update({'group_reward': max_group_reward})
+    userData[user] = tDict
+
+#userHeaders.extend(['ptot_out_unique_at'])
+userHeaders.extend(['cluster_coef'])
+userHeaders.extend(['unique_out_x_clustering'])
+userHeaders.extend(['punique_out_x_clustering'])
 userHeaders.extend(['user_reward'])
-userHeaders.extend(['ptot_out_unique_at_group'])
-userHeaders.extend(['unique_group_x_clustering'])
+userHeaders.extend(['punique_group_x_clustering'])
 userHeaders.extend(['group_reward'])
 userHeaders.extend(['user_url'])
 userHeaders.extend(['user_accounts_url'])
@@ -1265,9 +1308,9 @@ generate_user_and_transaction_data_github_csv(txnData,userData,unique_txnData,st
 
 if True:
     kept_headers = []
-    filename = 'sarafu_user_data_all_admin_private_'+start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_ago_str+'.csv'
+    filename = './data/sarafu_user_data_all_admin_private_'+start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_ago_str+'.csv'
     if private == False:
-        filename = 'sarafu_user_data_all_admin_pub_'+start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_ago_str+'.csv'
+        filename = './data/sarafu_user_data_all_admin_pub_'+start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_ago_str+'.csv'
     with open(filename, 'w',newline='') as csvfile:
         writerT = csv.writer(csvfile)
 
@@ -1281,5 +1324,9 @@ if True:
                 #writerT.writerow([str(user_data.get(attr, '')).strip('"') for attr in userHeaders])
 
 
-generate_transaction_data_svg(txnData, userData, unique_txnData, start_date, end_date, days_ago_str)
-output_Network_Viz(G, userData, start_date, end_date, days_ago_str)
+generate_transaction_data_svg(txnData, userData, unique_txnData, start_date, end_date, days_ago_str,days_ago)
+#output_Network_Viz(G, userData, start_date, end_date, days_ago_str)
+#output_User_Viz(G, userData, start_date, end_date, days_ago_str)
+#4082
+
+#get_Network_Viz_Monthly(G, unique_txnData, userData, start_date,end_date,days_ago_str,days_ago)

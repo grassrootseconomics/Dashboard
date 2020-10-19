@@ -5,8 +5,146 @@ import networkx as nx
 import random
 import csv
 import math
+from datetime import timedelta
 import operator
 
+group_Accounts= [19017,
+11037,
+20024,
+19063,
+15597,
+7991,
+16078,
+20352,
+7958,
+7472,
+13488,
+18278,
+13358,
+8075,
+7139,
+11832,
+8009,
+3644,
+4603,
+8742,
+12500,
+21252,
+18455,
+9228,
+20618,
+3770,
+21162,
+4094,
+4089,
+17030,
+11282,
+20992,
+6685,
+25099,
+11065,
+10407,
+21313,
+5742,
+19799,
+5631,
+4092,
+3650,
+10840,
+8775,
+7778,
+5121,
+19130,
+5968,
+18144,
+17512,
+19084,
+3649,
+7190,
+19067,
+13415,
+20523,
+4093,
+4090,
+12769,
+20013,
+3648,
+18894,
+19895,
+19656,
+19605,
+11042,
+3646,
+17549,
+9804,
+19667,
+7793,
+3645,
+18078,
+21923,
+7953,
+3752,
+22482,
+20871,
+7943,
+19066,
+19097,
+16106,
+19694,
+11280,
+9573,
+5637,
+16487,
+8434,
+15225,
+18478,
+7161,
+10774,
+10202,
+8145,
+5294,
+21722,
+17475,
+4091,
+8382,
+10627,
+22068,
+3754,
+5292,
+21944,
+4088,
+3771,
+8144,
+17112,
+5122,
+21603,
+11150,
+19887,
+3603,
+22982,
+19702,
+7842,
+3753,
+6642,
+10126,
+7033,
+11883,
+19314,
+8268,
+22997,
+4431,
+11493,
+8409,
+18793,
+11207,
+7089,
+22220,
+11251,
+20230,
+18543,
+20727,
+8808,
+]
 
 rcParams.update({'figure.autolayout': True})
 scale = 300.0
@@ -188,7 +326,7 @@ def n_trading_partners_calc(wid,atransactions, exclude_list):
     #    tier = max_tier
     return tier*(scaleX/2.0)#/max_tier
 
-def displayGraphs(mainGraph, graphs,userData,private=False,days_str=""):
+def displayGraphs(mainGraph, graphs,userData,start_date, end_date, days_str="", private=False):
     figureIndex = 2
     n = 1
 
@@ -221,7 +359,7 @@ def displayGraphs(mainGraph, graphs,userData,private=False,days_str=""):
 
     for graph in graphs:
 
-        G = removeFromGraph(mainGraph.copy(),graph)
+        G = graph#= removeFromGraph(mainGraph.copy(),graph)
 
         #if len(list(G.nodes()))<5 or len(list(G.nodes()))>200000:
         #    continue
@@ -252,7 +390,7 @@ def displayGraphs(mainGraph, graphs,userData,private=False,days_str=""):
         #print("Largest Degree: ",maxDegree, userData[node].get('first_name', '')+"_"+userData[node].get('last_name', ''))
         for node in G.nodes():
             #if nodes[node].volume>0.5*maxVol:
-            if G.degree(node)>2:
+            if G.degree(node)>3:
                 if private:
                     hubLabels[node] = userData[node].get('first_name', '') + " " + userData[node].get('last_name', '')+" "+userData[node].get('_phone', '').replace('+254','0')
                 else:
@@ -294,9 +432,9 @@ def displayGraphs(mainGraph, graphs,userData,private=False,days_str=""):
         n += 1
         axs_iter += 1
         #plt.show(block=True)
-    fileName = "network_graph_public_" + str(n - 1) + "_" + days_str + ".svg"
+    fileName = "network_graph_public_" + str(n - 1) + "_" +start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_str+'.csv'
     if private == True:
-        fileName = "network_graph_private_" + str(n - 1) + "_" + days_str + ".svg"
+        fileName = "network_graph_private_" + str(n - 1) + "_"  + start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_str+'.svg'
     print("****saved network viz ", fileName)
     plt.savefig(fileName, bbox_inches='tight')
 
@@ -349,12 +487,20 @@ def toGraph(txnData, userData, start_date = None, end_date=None,private=False):
             #if hash in tx_hash:
             #    continue
             #tx_hash.append(hash)
-
+            txn_date = None#t['created']
+            if t['created'] == None:
+                print("bad transaction: ", t)
+                continue
+            else:
+                txn_date = t['created'].date()
+            if txn_date < start_date or txn_date > end_date:
+                continue
             if t['transfer_subtype'] != 'STANDARD':
                 continue
 
             sender_user_id = t['sender_user_id']
             recipient_user_id = t['recipient_user_id']
+
 
             if sender_user_id == None:
                 sender_user_id = 1
@@ -403,6 +549,70 @@ def toGraph(txnData, userData, start_date = None, end_date=None,private=False):
 
     return G
 #//////////////////////////////////////////////////////////////////////////////////////////////////
+def get_Network_Viz_Monthly(mainGraph, txnData, userData, start_date,end_date,days_ago_str,days):
+    vizList = []
+    if True:#days > 100:
+        while start_date < end_date:
+
+            next_date = start_date + timedelta(days=7)
+            if next_date > end_date:
+                next_date = end_date
+            new_days_diff = (next_date - start_date).days + 1
+            new_days_str = str(new_days_diff - 1) + "days"
+            #viz = get_Network_Viz(G, userData, start_date, next_date, new_days_str, new_days_diff)
+            G = toGraph(txnData, userData, start_date, next_date, False)
+            Gnode = nx.ego_graph(G, 14899, 4)
+            #Ga = removeFromGraph(G.copy(), Gnode)
+            cluster = nx.average_clustering(Gnode)
+            print("<><><><><><><><><>><Added graph cluster coeff:  ", cluster)
+            vizList.append(Gnode)
+            start_date = next_date
+    displayGraphs(mainGraph, vizList, userData, start_date, end_date, days_ago_str, True)
+
+def get_Network_Viz(G, userData, start_date, end_date, days_ago_str):
+    print("NetworkVis....")
+    largest_sub_graph = None
+    size_of_largest = 0
+    user_data_new = []
+    sub_graphs = []
+    print_graphs = []
+
+    if True:
+
+        if True:
+            num_male = 0
+            num_female = 0
+            num_unknown = 0
+            locations = {}
+            foundNode = False
+            for node in group_Accounts:
+                Ga = nx.ego_graph(G, node, radius=2)
+                for node in Ga.nodes():
+                    zgender = userData[node].get('gender', '').strip('"')
+                    zlocation = userData[node].get('_location', '')
+                    if zlocation not in locations.keys():
+                        locations.update({zlocation: 1})
+                    else:
+                        locations[zlocation] = locations[zlocation] + 1
+
+                    if zgender == "female":
+                        num_female += 1
+                    elif zgender == "male":
+                        num_male += 1
+                    else:
+                        num_female += 1
+                total_weight = 0
+                for edge in Ga.edges():
+                    total_weight += Ga.get_edge_data(edge[0], edge[1])['weight']
+
+            # print("sub_graph size: ", len(list(sub_graph)), " male: ", num_male,  " female: ", num_female,  " unknown: ", num_unknown, " total weight: ", total_weight)
+            sorted_locs = sorted(locations.items(), key=lambda x: x[1], reverse=True)
+
+
+
+    # return a dicts of users and their cluster coefs
+    return
+
 def output_Network_Viz(G, userData, start_date,end_date,days_ago_str):
     print("NetworkVis....")
     #G  = toGraph(txnData, userData, start_date, end_date,private)
@@ -415,7 +625,8 @@ def output_Network_Viz(G, userData, start_date,end_date,days_ago_str):
 
 
 
-    d = list(nx.strongly_connected_components(G))
+    #d = list(nx.strongly_connected_components_recursive(G))
+    d = list(nx.weakly_connected_components(G))
     largest_sub_graph = None
     size_of_largest = 0
     user_data_new = []
@@ -440,7 +651,13 @@ def output_Network_Viz(G, userData, start_date,end_date,days_ago_str):
                 num_female = 0
                 num_unknown = 0
                 locations = {}
+                foundNode = False
                 for node in Ga.nodes():
+                    if node == 19017 and foundNode == False:
+                        foundNode = True
+                        print_graphs.append(nx.ego_graph(G,node,radius=2))
+
+
                     zgender = userData[node].get('gender', '').strip('"')
                     zlocation = userData[node].get('_location', '')
                     if zlocation not in locations.keys():
@@ -460,11 +677,12 @@ def output_Network_Viz(G, userData, start_date,end_date,days_ago_str):
                     #print("test: ",edge)
                     total_weight += Ga.get_edge_data(edge[0],edge[1])['weight']
                     #total_txn += Ga.get_edge_data(edge[0], edge[1])['txn']
+
                 #print("sub_graph size: ", len(list(sub_graph)), " male: ", num_male,  " female: ", num_female,  " unknown: ", num_unknown, " total weight: ", total_weight)
                 sorted_locs = sorted(locations.items(), key=lambda x: x[1], reverse=True)
-
-                    # writerT.writerow([str(user_data.get(attr, '')).strip('"') for attr in userHeaders])
-                networkData = {"cluster_nodes":len(list(sub_graph)), "male":num_male, "female":num_female, "unknown":num_unknown, "volume":total_weight, "location":sorted_locs[0][0], "location_strength":sorted_locs[0][1], "clustering":clustering}
+                networkData = {"cluster_nodes":len(list(sub_graph)), "male":num_male, "female":num_female,
+                               "unknown":num_unknown, "volume":total_weight, "location":sorted_locs[0][0],
+                               "location_strength":sorted_locs[0][1], "clustering":clustering}
                 #print(len(list(sub_graph)), ",", num_male, ",", num_female, ",", num_unknown,  ",", total_weight,",",
                 #      sorted_locs[0][0], "," , sorted_locs[0][1], ",", clustering)
                 zRow = list()
@@ -472,15 +690,16 @@ def output_Network_Viz(G, userData, start_date,end_date,days_ago_str):
                     zRow.append(str(networkData.get(attr, '')).strip('"'))
                 writerT.writerow(zRow)
 
-            if len(list(sub_graph)) > 3 and len(list(sub_graph)) < 1000:
+            #if len(list(sub_graph)) > 3 and len(list(sub_graph)) < 1000:
                 #print(len(list(sub_graph))," sub_graph:",end='')
-                print_graphs.append(sub_graph)
+            #    print_graphs.append(sub_graph)
                 #for usr in sub_graph:
                 #    print(userData[usr].get('first_name', '')+", "+userData[usr].get('last_name', '')+", "+userData[usr].get('_phone', '')+", "+userData[usr].get('bio', '').strip('"')+" ",end='')
                 #print(" ")
-            if len(list(sub_graph)) > size_of_largest:
-                size_of_largest = len(list(sub_graph))
-                largest_sub_graph = list(sub_graph)
+            #if len(list(sub_graph)) > size_of_largest:
+                #size_of_largest = len(list(sub_graph))
+                #largest_sub_graph = list(sub_graph)
+                #max(dict(G.degree()).items(), key = lambda x : x[1])
 
     print("****saved all network info to csv: ", filename, "***")
         #Gc = removeFromGraph(G.copy(),largest_sub_graph)
@@ -491,9 +710,20 @@ def output_Network_Viz(G, userData, start_date,end_date,days_ago_str):
 
     #nx.write_gexf(Gc, gephiName)
 
-    #displayGraphs(G,print_graphs, userData,False,"_misc")
+    #if len(print_graphs) >0:
+    #    displayGraphs(G,print_graphs, userData,start_date,end_date,days_ago_str,True)
     #if size_of_largest < 1000:
-    #    displayGraphs(G,[largest_sub_graph], userData,False,"_misc")
+    displayGraphs(G,[largest_sub_graph], userData,start_date,end_date,days_ago_str,True)
+
+    #return a dicts of users and their cluster coefs
+    return
+
+
+def output_User_Viz(G, userData, start_date,end_date,days_ago_str, userID):
+    print("User_NetworkVis....")
+    UsrGraph = nx.ego_graph(G, userID, radius=2)
+
+    displayUserGraphs(G,UsrGraph, userData,start_date,end_date,days_ago_str,True)
 
     #return a dicts of users and their cluster coefs
     return
