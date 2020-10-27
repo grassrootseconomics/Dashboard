@@ -646,7 +646,8 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
                 else:
                     lastTradeOut.update({tDict['sender_user_id']: tDict['created']})
             else:
-                txnDict.update({tDict['sender_user_id']: [tDict]})
+                if date_good:
+                    txnDict.update({tDict['sender_user_id']: [tDict]})
                 lastTradeOut.update({tDict['sender_user_id']: tDict['created']})
 
 
@@ -662,15 +663,14 @@ def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
                 else:
                     lastTradeIn.update({tDict['recipient_user_id']: tDict['created']})
             else:
-                txnDict.update({tDict['recipient_user_id']: [tDict]})
+                if date_good:
+                    txnDict.update({tDict['recipient_user_id']: [tDict]})
                 lastTradeIn.update({tDict['recipient_user_id']: tDict['created']})
 
             if tDict['recipient_user_id'] in firstTradeIn.keys():
                 if tDict['created'].date() < firstTradeIn[tDict['recipient_user_id']]['created'].date():
                     if tDict['transfer_subtype'] == 'STANDARD':
                         firstTradeIn[tDict['recipient_user_id']] = tDict
-
-
             else:
                 if tDict['transfer_subtype'] == 'STANDARD':
                     firstTradeIn.update({tDict['recipient_user_id']: tDict})
@@ -1019,9 +1019,11 @@ for user in userData.keys():
 
     min_size = 5
 
-    sseenUsers = []
-    seenUsers = []
+    sseenRecUsers = []
+    seenRecUsers = []
 
+    sseenSentUsers = []
+    seenSentUsers = []
 
     if(user in txnData.keys()):
         for trans in txnData[user]:
@@ -1029,16 +1031,16 @@ for user in userData.keys():
                    if trans['transfer_subtype'] != 'STANDARD':
                         volume_out+=trans['_transfer_amount_wei']
                         txns_out+=1
-                        if trans['recipient_user_id'] not in seenUsers:
-                            seenUsers.append(trans['recipient_user_id'])
+                        if trans['recipient_user_id'] not in seenRecUsers:
+                            seenRecUsers.append(trans['recipient_user_id'])
                             unique_txns_out+=1
                    else:
                         svolume_out+=trans['_transfer_amount_wei']
                         stxns_out+=1
                         #if (user == 4082):
                         #    print(stxns_out)
-                        if trans['recipient_user_id'] not in sseenUsers:
-                            sseenUsers.append(trans['recipient_user_id'])
+                        if trans['recipient_user_id'] not in sseenRecUsers:
+                            sseenRecUsers.append(trans['recipient_user_id'])
                             sunique_txns_out+=1
                             if userData[user]['_held_roles'] == "GROUP_ACCOUNT":
                                 sunique_txns_out_group += 1
@@ -1054,16 +1056,18 @@ for user in userData.keys():
 
                else:
                     if trans['transfer_subtype'] != 'STANDARD':
+                        if user == 13488:
+                            print("<><><><> ",trans['_transfer_amount_wei'], trans['created'])
                         volume_in+=trans['_transfer_amount_wei']
                         txns_in+=1
-                        if trans['sender_user_id'] not in seenUsers:
-                            seenUsers.append(trans['sender_user_id'])
+                        if trans['sender_user_id'] not in seenSentUsers:
+                            seenSentUsers.append(trans['sender_user_id'])
                             unique_txns_in+=1
                     else:
                         svolume_in+=trans['_transfer_amount_wei']
                         stxns_in+=1
-                        if trans['sender_user_id'] not in sseenUsers:
-                            sseenUsers.append(trans['sender_user_id'])
+                        if trans['sender_user_id'] not in sseenSentUsers:
+                            sseenSentUsers.append(trans['sender_user_id'])
                             sunique_txns_in+=1
                             if(trans['_transfer_amount_wei']>=min_size):
                                 sunique_txns_in_atleast+=1
