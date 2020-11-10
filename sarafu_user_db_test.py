@@ -5,6 +5,7 @@ import psycopg2
 import getopt
 import sys
 import math
+import decimal
 import copy
 import csv
 import progressbar
@@ -35,7 +36,7 @@ private=True
 days_ago = 30
 days_ago_str = None#"Feb"
 start_date = None#Date().n_days_ago(days=22+31)
-end_date = None#Date().n_days_ago(days=(22))
+end_date = None#Date().n_days_ago(days=(2))
 
 if start_date == None:
     days_ago_str = "all_time"
@@ -331,7 +332,7 @@ def highlight_datetimes(dates,indices, ax):
 
 
 def generate_transaction_data_svg(txnData, userData, unique_txnData, start_date, end_date, days_ago_str, days_ago):
-
+    #end_date = Date().n_days_ago(days=(2))
     days = days_ago
     days_str = days_ago_str
     fileName = "./data/trade_txdata_" +start_date.strftime("%Y%m%d")+"-"+end_date.strftime("%Y%m%d")+"-"+days_ago_str+'.png'
@@ -477,9 +478,9 @@ def generate_transaction_data_svg(txnData, userData, unique_txnData, start_date,
 
     #df = df[::-1]
 
-    ax0.set_title('Transaction Volume')
+    ax0.set_title('Sarafu Transaction Volume')
     for tname in token_names:
-        if tname != 'RECLAMATION':
+        if tname != 'RECLAMATION' and tname != 'DISBURSEMENT' and tname != 'AGENT_OUT':
             ax0.plot(x_values, y_voltx_values[tname][::-1], 'o-', label=tname)
         #ax0.plot(x_values, y_voltx_values["DISBURSEMENT"][::-1], 'o-', label='Volume')
     ax0.legend()
@@ -490,7 +491,7 @@ def generate_transaction_data_svg(txnData, userData, unique_txnData, start_date,
     #ax1.hist(voltx_data, bins=50, facecolor='g', alpha=0.75, label='Volume Hist')
     #ax1.xaxis.set_visible(True)
 
-    ax2.set_title('Number of Standard Transactions & Number of New Users')
+    ax2.set_title('Number of User to User Transactions & Number of New Users')
     ax2.plot(x_values, y_numtx_values["STANDARD"][::-1], 'o-', label='# Txns')
     ax2.plot(x_values, y_reg_values["STANDARD"][::-1], 'o-', label='# New Users')
     ax2.legend()
@@ -1056,8 +1057,8 @@ for user in userData.keys():
 
                else:
                     if trans['transfer_subtype'] != 'STANDARD':
-                        if user == 13488:
-                            print("<><><><> ",trans['_transfer_amount_wei'], trans['created'])
+                        #if user == 13488:
+                        #    print("<><><><> ",trans['_transfer_amount_wei'], trans['created'])
                         volume_in+=trans['_transfer_amount_wei']
                         txns_in+=1
                         if trans['sender_user_id'] not in seenSentUsers:
@@ -1193,8 +1194,8 @@ for user, data in userData.items():
                 tDict.update({'first_trade_in_time': firstTradeIn[user]['created']})
                 if sender_id in userData.keys():
                     tDict.update({'first_trade_in_role': userData[sender_id]['_held_roles']})
-                    tDict.update({'first_trade_in_sphone': userData[sender_id]['_phone']})
-                    tDict.update({'first_trade_in_tphone': userData[user]['_phone']})
+                    tDict.update({'first_trade_in_sphone': userData[sender_id].get('_phone','')})
+                    tDict.update({'first_trade_in_tphone': userData[user].get('_phone','')})
                 else:
                     print("no way dude", firstTradeIn[user])
         else:
@@ -1203,8 +1204,8 @@ for user, data in userData.items():
             tDict.update({'first_trade_in_time': firstTradeIn[user]['created']})
             if sender_id in userData.keys():
                 tDict.update({'first_trade_in_role': userData[sender_id]['_held_roles']})
-                tDict.update({'first_trade_in_sphone': userData[sender_id]['_phone']})
-                tDict.update({'first_trade_in_tphone': userData[user]['_phone']})
+                tDict.update({'first_trade_in_sphone': userData[sender_id].get('_phone','')})
+                tDict.update({'first_trade_in_tphone': userData[user].get('_phone','')})
             else:
                 print("no way dude", firstTradeIn[user])
 
@@ -1217,12 +1218,24 @@ for user, data in userData.items():
         tDict.update({'first_trade_in_sphone': 'None'})
         tDict.update({'first_trade_in_tphone': 'None'})
 
-    monthly_fee = 80
     max_fee = 0
-    if days_since > 0 and data['_balance_wei'] > 0:
-        max_fee = min([int(data['_balance_wei']), int(monthly_fee*math.floor(days_since/30))])
+    min_fee = 0
+    weekly_balance_fee_per = 0.005
+    weekly_balance_fee = int(data['_balance_wei'] * decimal.Decimal(weekly_balance_fee_per))
+
+    weekly_dormant_fee = 20
+    dormant_fee = 0
+    if days_since > 0 :
+        dormant_fee = int(weekly_dormant_fee*math.floor(days_since/7))
     # tDict = data
-    tDict.update({'max_fee': max_fee})
+    max_fee = max(weekly_balance_fee,weekly_balance_fee)
+
+    if data['_balance_wei'] > 0:
+        min_fee = min(data['_balance_wei'],max_fee)
+
+    tDict.update({'weekly_balance_fee': weekly_balance_fee})
+    tDict.update({'dormant_fee': dormant_fee})
+    tDict.update({'min_fee': max_fee})
 
     userData[user]=tDict
 
@@ -1235,7 +1248,7 @@ for user, data in userData.items():
     max_group_reward = 0
     punique_group_x_clustering = 0
     punique_user_x_clustering = data['unique_out_x_clustering'] /totalRank
-    if data['_balance_wei']>=min_group_balance:
+    if data['_balance_wei']>=min_group_balance and totalRank_group >0:
         punique_group_x_clustering = data['unique_out_group_x_clustering'] / totalRank_group
         max_group_reward = int(total_group_reward * punique_group_x_clustering)
 
@@ -1252,23 +1265,30 @@ for user, data in userData.items():
 
 #userHeaders.extend(['ptot_out_unique_at'])
 userHeaders.extend(['cluster_coef'])
-userHeaders.extend(['unique_out_x_clustering'])
-userHeaders.extend(['punique_out_x_clustering'])
-userHeaders.extend(['user_reward'])
-userHeaders.extend(['punique_group_x_clustering'])
-userHeaders.extend(['group_reward'])
-userHeaders.extend(['user_url'])
-userHeaders.extend(['user_accounts_url'])
+if private == True:
+    userHeaders.extend(['unique_out_x_clustering'])
+    userHeaders.extend(['punique_out_x_clustering'])
+    userHeaders.extend(['user_reward'])
+    userHeaders.extend(['punique_group_x_clustering'])
+    userHeaders.extend(['group_reward'])
+    userHeaders.extend(['user_url'])
+    userHeaders.extend(['user_accounts_url'])
+
 userHeaders.extend(['last_trade_out'])
 userHeaders.extend(['last_trade_out_days'])
-userHeaders.extend(['max_fee'])
-userHeaders.extend(['last_trade_in'])
 
-userHeaders.extend(['first_trade_in_user'])
-userHeaders.extend(['first_trade_in_role'])
-userHeaders.extend(['first_trade_in_time'])
-userHeaders.extend(['first_trade_in_sphone'])
-userHeaders.extend(['first_trade_in_tphone'])
+if private == True:
+    userHeaders.extend(['min_fee'])
+    userHeaders.extend(['weekly_balance_fee'])
+    userHeaders.extend(['dormant_fee'])
+
+userHeaders.extend(['last_trade_in'])
+if private == True:
+    userHeaders.extend(['first_trade_in_user'])
+    userHeaders.extend(['first_trade_in_role'])
+    userHeaders.extend(['first_trade_in_time'])
+    userHeaders.extend(['first_trade_in_sphone'])
+    userHeaders.extend(['first_trade_in_tphone'])
 
 '''
 userConfidenceDict = {}
@@ -1330,7 +1350,7 @@ if True:
 
 generate_transaction_data_svg(txnData, userData, unique_txnData, start_date, end_date, days_ago_str,days_ago)
 #output_Network_Viz(G, userData, start_date, end_date, days_ago_str)
-#output_User_Viz(G, userData, start_date, end_date, days_ago_str)
+#output_User_Viz(G, userDllata, start_date, end_date, days_ago_str)
 #4082
 
 #get_Network_Viz_Monthly(G, unique_txnData, userData, start_date,end_date,days_ago_str,days_ago)
