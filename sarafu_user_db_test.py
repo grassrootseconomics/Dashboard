@@ -18,9 +18,11 @@ from network_viz import toGraph
 from network_viz import output_Network_Viz
 from network_viz import get_Network_Viz_Monthly
 
+#area_names = {'mukuru area':['sub villages'],gps box(4 lat longs), area_tpye (rural....)}
+
 area_names = {
     'Mukuru Nairobi': ['kayaba', 'kambi', 'mukuru', 'masai', 'hazina', 'south', 'tetra', 'tetrapak', 'ruben',
-                       'kingston', 'korokocho','kingstone', 'kamongo', 'lungalunga', 'sinai', 'lungu', 'lunga lunga','owino road','seigei'],
+                       'kingston', 'korokocho','kingstone', 'kamongo', 'lungalunga', 'sinai', 'sigei', 'lungu', 'lunga lunga','owino road','seigei'],
     'Kinango Kwale': ['amani', 'bofu', 'chibuga', 'chikomani', 'chilongoni','chigojoni','chinguluni', 'chigato', 'chigale', 'chikole','chilongoni'
                       'chigojoni', 'chikomani', 'chizini','chikomeni', 'chidzuvini', 'chidzivuni', 'chikuyu', 'doti', 'dzugwe', 'dzivani',
                       'dzovuni','hanje', 'kasemeni', 'katundani', 'kibandaogo', 'kibandaongo', 'kwale', 'kinango', 'kidzuvini', 'kalalani',
@@ -33,7 +35,7 @@ area_names = {
     'Misc Nairobi': ['nairobi', 'west', 'lindi', 'kibera', 'kibira', 'kibra', 'makina', 'soweto', 'olympic', 'kangemi','ruiru',
                 'congo', 'kawangware','kwangware', 'donholm', 'dagoreti','dandora','kabete', 'sinai', 'donhom','donholm', 'huruma', 'kitengela', 'makadara',',mlolongo','kenyatta','mlolongo',
                 'tassia','tasia','gatina', '56', 'industrial', 'kasarani', 'kayole', 'mathare', 'pipe', 'juja', 'uchumi','jogoo', 'umoja','thika', 'kikuyu','stadium','buru buru', 'ngong','starehe',
-                'mwiki', 'fuata', 'kware', 'kabiro', 'embakassi','embakasi', 'kmoja', 'east', 'githurai', 'landi', 'langata','limuru','mathere','dagoretti','kirembe','muugano','mwiki'],
+                'mwiki', 'fuata', 'kware', 'kabiro', 'embakassi','embakasi', 'kmoja', 'east', 'githurai', 'landi', 'langata','limuru','mathere','dagoretti','kirembe','muugano','mwiki','toi market'],
     'Misc Mombasa': ['mombasa', 'likoni', 'bangla', 'bangladesh','ngombeni','ngómbeni', 'ombeni', 'magongo', 'miritini', 'changamwe',
                         'jomvu','ohuru'],
     'Kisauni': ['bamburi','kisauni','mworoni','nyali','shanzu','bombolulu','mtopanga','mjambere','magogoni','junda','mwakirunge'],
@@ -72,8 +74,8 @@ private=True
 
 days_ago = 30
 days_ago_str = None#"Feb"
-start_date = None#Date().n_days_ago(days=22+31)
-end_date = None#Date().n_days_ago(days=(2))
+start_date = None#Date().n_days_ago(days=350)
+end_date = None#Date().n_days_ago(days=306)
 
 if start_date == None:
     days_ago_str = "all_time"
