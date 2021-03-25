@@ -40,13 +40,14 @@ area_names = {
                         'jomvu','ohuru'],
     'Kisauni': ['bamburi','kisauni','mworoni','nyali','shanzu','bombolulu','mtopanga','mjambere','magogoni','junda','mwakirunge'],
     'Kilifi': ['kilfi','kilifi', 'mtwapa','takaungu', 'makongeni', 'mnarani', 'mnarani', 'office','g.e','ge'],
+    'Kakuma': ['kakuma'],
     'Nyanza': ['busia', 'nyalgunga', 'siaya', 'kisumu', 'hawinga', 'uyoma', 'mumias','homabay','migori','kusumu'],
     'Misc Rural Counties': ['makueni', 'meru', 'kisii', 'bomet', 'machakos', 'bungoma','eldoret','kakamega','kericho','kajiado','nandi','nyeri','kitui','wote','kiambu','mwea','nakuru','narok'],
     'other': ['other', 'none', 'unknown']}
 
 
 
-area_types = {'urban': ['urban', 'nairobi', 'mombasa'], 'rural': ['rural', 'kwale', 'kinango', 'nyanza'], 'periurban' : ['kilifi', 'periurban'],
+area_types = {'urban': ['urban', 'nairobi', 'mombasa'], 'rural': ['rural', 'kakuma', 'kwale', 'kinango', 'nyanza'], 'periurban' : ['kilifi', 'periurban'],
               'other' : ['other']}
 
 # process input params 1
@@ -574,8 +575,9 @@ def generate_location_transaction_data_svg(txnData, userData, unique_txnData, st
     idx = 1
     communities.insert(0, 'Total')
     for to in area_names.keys():
-        communities.insert(idx, to)
-        idx = idx+1
+        if True:
+            communities.insert(idx, to)
+            idx = idx+1
     #db = RDSDev()
 
     token_transactions = txnData#db_cache.select_token_transactions(start_date, end_date)
@@ -717,10 +719,14 @@ def generate_location_transaction_data_svg(txnData, userData, unique_txnData, st
 
     #df = df[::-1]
 
+    #displayAreas= ['Kisauni']
+    displayAreas = ['Total']
+
     ax0.set_title('Sarafu Transaction Volume')
     for tname in communities:
         #print("this one1: ", tname)
-        if tname != 'Total':
+        if tname in displayAreas: #== 'Kisauni':
+        #if tname != 'Total':
             ax0.plot(x_values, y_voltx_values[tname][::-1], 'o-', label=tname)
         #ax0.plot(x_values, y_voltx_values["DISBURSEMENT"][::-1], 'o-', label='Volume')
     ax0.legend()
@@ -729,8 +735,8 @@ def generate_location_transaction_data_svg(txnData, userData, unique_txnData, st
     ax2.set_title('Number of User to User Transactions')
     for tname in communities:
         # print("this one1: ", tname)
-        if tname != 'Total':
-
+        #if tname != 'Total':
+        if tname in displayAreas:
             #ax2.plot(x_values, site_users[tname][::-1], 'o-', label=tname)
             ax2.plot(x_values, y_numtx_values[tname][::-1], 'o-', label=tname)
             #ax2.plot(x_values, y_reg_values[tname][::-1], 'o-', label=tname+"reg")
@@ -741,7 +747,8 @@ def generate_location_transaction_data_svg(txnData, userData, unique_txnData, st
     ax3.set_title('Number of Users per Day')
     for tname in communities:
         # print("this one1: ", tname)
-        if tname != 'Total':
+        #if tname != 'Total':
+        if tname in displayAreas:
 
             ax3.plot(x_values, site_users[tname][::-1], 'o-', label=tname)
             #ax2.plot(x_values, y_numtx_values[tname][::-1], 'o-', label=tname)
@@ -753,7 +760,8 @@ def generate_location_transaction_data_svg(txnData, userData, unique_txnData, st
     ax4.set_title('Number of Registrations per Day')
     for tname in communities:
         # print("this one1: ", tname)
-        if tname != 'Total':
+        #if tname != 'Total':
+        if tname in displayAreas:
 
             ax4.plot(x_values, y_reg_values[tname][::-1], 'o-', label=tname)
 
@@ -1835,7 +1843,6 @@ userHeaders.extend(['confidence'])
 
 generate_user_and_transaction_data_github_csv(txnData,userData,unique_txnData,start_date,end_date,days_ago_str,private=private)
 stff_list = []
-#stff_list = ['+254727806655']
 
 stff_hash = {}
 stff_bal_hash = {}
@@ -1929,24 +1936,26 @@ if True:
                             user_trade_bal[recipient_user_id] = user_trade_bal[recipient_user_id] + t['_transfer_amount_wei']
                             #print("recipent2", recipient_user_id, user_trade_bal[recipient_user_id])
 
-
+                    newUserData = []
                     for usra_data in user_found_data:
-                        #print(usr)
-                        #print("test <><><><",user_trade_bal[usr])
-                        #user_found_data[usr]['trade_balance'] = user_trade_bal[usr]
-                        usra = usra_data['id']
-                        tDicta = usra_data
+
+                        usra = usra_data['id'] #id
+                        tDicta = usra_data.copy()
                         if usra in user_trade_bal.keys():
                             tDicta.update({'trade_bal': user_trade_bal[usra]})
                         else:
                             tDicta.update({'trade_bal': 0})
-                        #print(usra_data)
-                        #print("fianal", usra, user_trade_bal[usra])
-                        user_found_data[user_found_data.index(usra_data)] = tDicta
-                    stff_hash[user_data['id']] = user_found_data
 
+                    #    if tDicta['first_name'] == 'Ben':
+                    #        print("tDicta", user_data['first_name'], "traded with", usra, tDicta['first_name'], tDicta['trade_bal'])
 
+                        newUserData.append(tDicta)
+                    stff_hash[user_data['id']] = newUserData.copy()
 
+                    #for uuz in stff_hash.keys():
+                    #    for uu in stff_hash[uuz]:
+                    #        if uu['first_name'] == 'Ben':
+                    #            print("stff_hash", userData[uuz]['first_name'], "traded with", uu['first_name'], uu['trade_bal'])
 
 if private == True:
 
@@ -1965,6 +1974,8 @@ if private == True:
                 zRow = list()
                 if stff_data_list != None:
                     for attr in newHeaders:
+                        #if stff_data_list.get('first_name', '') == 'Ben':
+                        #    print("geez Ben", stff_data_list.get('trade_bal', ''))
                         zRow.append(str(stff_data_list.get(attr, '')).strip('"'))
                         #zRow.append(str(sud))
                     writerT.writerow(zRow)
