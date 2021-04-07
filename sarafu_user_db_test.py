@@ -21,33 +21,35 @@ from network_viz import get_Network_Viz_Monthly
 #area_names = {'mukuru area':['sub villages'],gps box(4 lat longs), area_tpye (rural....)}
 
 area_names = {
-    'Mukuru Nairobi': ['kayaba', 'kambi', 'mukuru', 'masai', 'hazina', 'south', 'tetra', 'tetrapak', 'ruben',
+    'Mukuru Nairobi': ['kayaba', 'kayba','kambi', 'mukuru', 'masai', 'hazina', 'south', 'tetra', 'tetrapak', 'ruben', 'rueben',
                        'kingston', 'korokocho','kingstone', 'kamongo', 'lungalunga', 'sinai', 'sigei', 'lungu', 'lunga lunga','owino road','seigei'],
     'Kinango Kwale': ['amani', 'bofu', 'chibuga', 'chikomani', 'chilongoni','chigojoni','chinguluni', 'chigato', 'chigale', 'chikole','chilongoni'
-                      'chigojoni', 'chikomani', 'chizini','chikomeni', 'chidzuvini', 'chidzivuni', 'chikuyu', 'doti', 'dzugwe', 'dzivani',
+                      'chilumani', 'chigojoni', 'chikomani', 'chizini','chikomeni', 'chidzuvini', 'chidzivuni', 'chikuyu', 'chizingo', 'doti', 'dzugwe', 'dzivani',
                       'dzovuni','hanje', 'kasemeni', 'katundani', 'kibandaogo', 'kibandaongo', 'kwale', 'kinango', 'kidzuvini', 'kalalani',
                       'kafuduni', 'kaloleni', 'kilibole','lutsangani','peku', 'gona', 'guro', 'gandini',
                       'mkanyeni', 'myenzeni', 'miyenzeni','miatsiani', 'mienzeni', 'mnyenzeni', 'minyenzeni', 'miyani','mioleni',
                       'makuluni', 'mariakani','makobeni', 'madewani', 'mwangaraba', 'mwashanga', 'miloeni', 'mabesheni', 'mazeras','mazera', 'mlola',
-                      'muugano', 'mabesheni', 'miatsani', 'miatsiani', 'mwache', 'mwangani', 'miguneni','nzora','nzovuni',
+                      'muugano', 'mulunguni', 'mabesheni', 'miatsani', 'miatsiani', 'mwache', 'mwangani', 'mwehavikonje', 'miguneni','nzora','nzovuni',
                       'vikinduni', 'vikolani', 'vitangani', 'viogato', 'vyogato', 'vistangani', 'yapha', 'yava', 'yowani',
-                      'ziwani','majengo','matuga','vigungani','ukunda','kokotoni','mikindani'],
+                      'ziwani','majengo','matuga','vigungani','vidziweni','vinyunduni','ukunda','kokotoni','mikindani'],
     'Misc Nairobi': ['nairobi', 'west', 'lindi', 'kibera', 'kibira', 'kibra', 'makina', 'soweto', 'olympic', 'kangemi','ruiru',
                 'congo', 'kawangware','kwangware', 'donholm', 'dagoreti','dandora','kabete', 'sinai', 'donhom','donholm', 'huruma', 'kitengela', 'makadara',',mlolongo','kenyatta','mlolongo',
-                'tassia','tasia','gatina', '56', 'industrial', 'kasarani', 'kayole', 'mathare', 'pipe', 'juja', 'uchumi','jogoo', 'umoja','thika', 'kikuyu','stadium','buru buru', 'ngong','starehe',
+                'tassia','tasia','gatina', '56', 'industrial', 'kariobangi','kasarani', 'kayole', 'mathare', 'pipe', 'juja', 'uchumi','jogoo', 'umoja','thika', 'kikuyu','stadium','buru buru', 'ngong','starehe',
                 'mwiki', 'fuata', 'kware', 'kabiro', 'embakassi','embakasi', 'kmoja', 'east', 'githurai', 'landi', 'langata','limuru','mathere','dagoretti','kirembe','muugano','mwiki','toi market'],
-    'Misc Mombasa': ['mombasa', 'likoni', 'bangla', 'bangladesh','ngombeni','ngómbeni', 'ombeni', 'magongo', 'miritini', 'changamwe',
-                        'jomvu','ohuru'],
-    'Kisauni': ['bamburi','kisauni','mworoni','nyali','shanzu','bombolulu','mtopanga','mjambere','magogoni','junda','mwakirunge'],
-    'Kilifi': ['kilfi','kilifi', 'mtwapa','takaungu', 'makongeni', 'mnarani', 'mnarani', 'office','g.e','ge'],
+    'Misc Mombasa': ['mombasa', 'likoni', 'bangla', 'bangladesh','k izingo','old town','makupa','mvita','ngombeni','ngómbeni', 'ombeni', 'magongo', 'miritini', 'changamwe',
+                        'jomvu','ohuru','tudor','diani'],
+    'Kisauni': ['bamburi','kisauni','mworoni','nyali','shanzu','bombolulu','mtopanga','mjambere','majaoni','manyani','magogoni','junda','mwakirunge','mshomoroni'],
+    'Kilifi': ['kilfi','kilifi', 'mtwapa','takaungu', 'makongeni', 'mnarani', 'mnarani', 'office','g.e','ge','raibai','ribe'],
     'Kakuma': ['kakuma'],
-    'Nyanza': ['busia', 'nyalgunga', 'siaya', 'kisumu', 'hawinga', 'uyoma', 'mumias','homabay','migori','kusumu'],
-    'Misc Rural Counties': ['makueni', 'meru', 'kisii', 'bomet', 'machakos', 'bungoma','eldoret','kakamega','kericho','kajiado','nandi','nyeri','kitui','wote','kiambu','mwea','nakuru','narok'],
+    'Kitui': ['kitui','mwingi'],
+    'Nyanza': ['busia', 'nyalgunga', 'mbita','siaya', 'kisumu', 'nyalenda','hawinga', 'rangala','uyoma', 'mumias','homabay','homaboy','migori','kusumu'],
+    'Misc Rural Counties': ['makueni', 'meru', 'kisii', 'bomet', 'machakos', 'bungoma','eldoret','kakamega','kericho','kajiado','nandi','nyeri','wote','kiambu','mwea','nakuru','narok'],
     'other': ['other', 'none', 'unknown']}
 
 
 
-area_types = {'urban': ['urban', 'nairobi', 'mombasa'], 'rural': ['rural', 'kakuma', 'kwale', 'kinango', 'nyanza'], 'periurban' : ['kilifi', 'periurban'],
+
+area_types = {'urban': ['urban', 'nairobi', 'mombasa'], 'rural': ['rural', 'kakuma', 'kwale', 'kinango', 'kitui', 'nyanza'], 'periurban' : ['kilifi', 'periurban'],
               'other' : ['other']}
 
 # process input params 1
@@ -719,8 +721,10 @@ def generate_location_transaction_data_svg(txnData, userData, unique_txnData, st
 
     #df = df[::-1]
 
-    #displayAreas= ['Kisauni']
-    displayAreas = ['Total']
+    #displayAreas= ['Mukuru Nairobi']
+    #displayAreas = ['Kisauni','Mukuru Nairobi','Kinango Kwale','Nyanza','Kilifi']
+    #displayAreas = ['Total']
+    displayAreas = ['Kakuma']
 
     ax0.set_title('Sarafu Transaction Volume')
     for tname in communities:
