@@ -20,6 +20,73 @@ from network_viz import get_Network_Viz_Monthly
 
 #area_names = {'mukuru area':['sub villages'],gps box(4 lat longs), area_tpye (rural....)}
 
+#Education	Environment	Farming/Labour	Food/Water	Fuel/Energy			Health			Savings Group	Shop				Transport
+
+product_categories = {
+    'system': ['system', 'office main','office main phone'],
+    'education': ['book','coach','teacher','sch','school','pry','education','student','mwalimu','maalim','consultant',
+                  'consult','college','university','lecturer', 'primary','secondary','daycare','babycare','baby care',
+                  'elim','eimu','nursery','red cross','volunteer','instructor','journalist', 'lesson','academy',
+                  'headmistress','headteacher','cyber','researcher','professor','demo','expert','tution','children',
+                  'headmaster','educator','Marital counsellor','counsellor','trainer','vijana','youth','intern',
+                  'redcross','KRCS','danish','science','data','facilitator','vitabu','kitabu'],
+    'faith': ['pastor','imam','madrasa','religous','religious', 'ustadh','ustadhi','Marital counsellor',
+                  'counsellor','church','kanisa','mksiti','donor'],
+    'government': ['elder', 'chief','police','government','country','county','soldier','village admin','ward','leader',
+                   'kra','mailman','immagration'],
+    'environment': ['conservation','toilet','choo','garbage','fagio','waste','tree','taka','scrap','cleaning',
+                    'gardener','rubbish','usafi','mazingira','miti','trash','cleaner','plastic','collection',
+                    'seedling','seedlings','recycling'],
+    'farming': ['farm','farmer','farming','mkulima','kulima','ukulima','wakulima','jembe','shamba'],
+    'labour': ['artist','agent','guard','askari','accountant','baker','beadwork','beauty','business','barber','casual',
+               'electrian', 'caretaker','car wash','capenter','construction','chef','catering','cobler','cobbler',
+               'carwash','dhobi','landlord','design','carpenter','fundi','hawking','hawker','househelp','hsehelp',
+               'house help','help','housegirl','kushona', 'juakali','jualikali','juacali','jua kali','shepherd',
+               'makuti','kujenga','kinyozi','kazi','knitting','kufua','fua','hustler','biashara','labour','labor','laundry',
+               'repair','hair','posho','mill','mtambo','uvuvi','engineer','manager','tailor','nguo','mason','mtumba',
+               'garage','mechanic','mjenzi','mfugaji','painter','receptionist','printing','programming','plumb',
+               'charging','salon','mpishi','msusi','mgema','footballer','photocopy','peddler', 'staff','sales',
+               'service','saloon','seremala','security','insurance','secretary','shoe','shepard','shephard','tout',
+               'tv','mvuvi','mawe','majani','maembe','freelance','mjengo','electronics','photographer','programmer', 'electrician',
+               'washing','bricks','welder','welding','working','worker','watchman','waiter','waitress','viatu','yoga',
+               'guitarist','house','artisan','musician','trade','makonge','ujenzi','vendor','watchlady','marketing',
+               'beautician','photo','metal work','supplier','law firm','brewer'],
+    'food': ['avocado','bhajia','bajia', 'mbonga','bofu','beans','biscuits','biringanya','banana','bananas','crisps','chakula',
+             'coconut','chapati','cereal','chipo','chapo','chai','chips','cassava','cake','cereals','cook','corn',
+             'coffee','chicken','dagaa','donut','dough','groundnuts','hotel','holel','hoteli','butcher','butchery',
+             'fruit','food','fruits','fish','githeri','grocery','grocer','pojo','papa','goats','mabenda','mbenda','poultry',
+             'soda','peanuts','potatoes','samosa','soko','samaki','tomato','tomatoes','mchele','matunda','mango',
+             'melon','mellon','nyanya','nyama','omena','umena','ndizi','njugu','kamba kamba','khaimati','kaimati',
+             'kunde','kuku','kahawa','keki','muguka','miraa','milk','choma','maziwa','mboga','mbog','busaa','chumvi',
+             'cabbages','mabuyu','machungwa','mbuzi','mnazi','mchicha','ngombe','ngano','nazi','oranges','peanuts',
+             'mkate','bread','mikate','vitungu','sausages','maize','mbata','mchuzi','mchuuzi','mandazi','mbaazi',
+             'mahindi','maandazi','mogoka','meat','mhogo','mihogo','muhogo','maharagwe','miwa','mahamri','mitumba',
+             'simsim','porridge','pilau','vegetable','egg','mayai','mifugo','unga','good','sima','sweet','sweats','sambusa',
+             'snacks','sugar','suger','ugoro','sukari','soup','spinach','smokie','smokies','sukuma','tea','uji','ugali',
+             'uchuzi','uchuuzi','viazi','yoghurt','yogurt','wine','marondo','maandzi','matoke','omeno','onions',
+             'nzugu','korosho','barafu','juice'],
+    'water': ['maji','water'],
+    'health': ['agrovet','dispensary','barakoa','chemist','Chemicals','chv','doctor','daktari','dawa','hospital',
+               'herbalist','mganga','sabuni','soap',
+               'nurse','heath','community health worker','clinic','clinical','mask','medicine','lab technician',
+               'pharmacy','cosmetics','veterinary','vet','sickly','emergency response','emergency'],
+    'savings': ['chama','group','savings','loan','silc','vsla','credit','finance'],
+    'shop': ['bag','bead','belt','bedding','jik','bed','cement','botique','boutique','lines','kibanda','kiosk',
+             'spareparts','candy','cloth','electricals','mutumba','cafe','leso','lesso','duka','spare parts','socks',
+             'malimali','mitungi','mali mali','hardware','detergent','detergents','dera','retail',
+             'kamba','pombe','pampers','pool','phone','simu','mangwe','mikeka','movie','shop','acces','mchanga','uto',
+             'airtime','matress','mattress','mattresses','mpsea','mpesa','shirt','wholesaler','perfume','playstation',
+             'tissue','vikapu','uniform','flowers','vitenge','utencils','utensils','station','jewel','pool table',
+             'club','pub','bar','furniture','m-pesa','vyombo'],
+    'transport': ['kebeba','beba','bebabeba','bike','bicycle','matatu','boda','bodaboda','cart','carrier','tour',
+                  'travel','driver','dereva','tout','conductor','kubeba','tuktuk','taxi','piki','pikipiki','manamba',
+                  'trasportion','mkokoteni','mover','motorist','motorbike','transport','transpoter','gari','magari',
+                  'makanga','car'],
+    'fuel/energy': ['timber','timberyard','biogas','charcol','charcoal','kuni','mbao','fuel','makaa','mafuta',
+                    'moto','solar','stima','fire','firewood','wood','oil','taa','gas','paraffin','parrafin','parafin',
+                    'petrol','petro','kerosine','kerosene','diesel'],
+    'other': ['other', 'none', 'unknown','none']}
+
 area_names = {
     'Mukuru Nairobi': ['kayaba', 'kayba','kambi', 'mukuru', 'masai', 'hazina', 'south', 'tetra', 'tetrapak', 'ruben', 'rueben',
                        'kingston', 'korokocho','kingstone', 'kamongo', 'lungalunga', 'sinai', 'sigei', 'lungu', 'lunga lunga','owino road','seigei'],
@@ -36,7 +103,7 @@ area_names = {
                 'congo', 'kawangware','kwangware', 'donholm', 'dagoreti','dandora','kabete', 'sinai', 'donhom','donholm', 'huruma', 'kitengela', 'makadara',',mlolongo','kenyatta','mlolongo',
                 'tassia','tasia','gatina', '56', 'industrial', 'kariobangi','kasarani', 'kayole', 'mathare', 'pipe', 'juja', 'uchumi','jogoo', 'umoja','thika', 'kikuyu','stadium','buru buru', 'ngong','starehe',
                 'mwiki', 'fuata', 'kware', 'kabiro', 'embakassi','embakasi', 'kmoja', 'east', 'githurai', 'landi', 'langata','limuru','mathere','dagoretti','kirembe','muugano','mwiki','toi market'],
-    'Misc Mombasa': ['mombasa', 'likoni', 'bangla', 'bangladesh','k izingo','old town','makupa','mvita','ngombeni','ngómbeni', 'ombeni', 'magongo', 'miritini', 'changamwe',
+    'Misc Mombasa': ['mombasa', 'likoni', 'bangla', 'bangladesh','kizingo','old town','makupa','mvita','ngombeni','ngómbeni', 'ombeni', 'magongo', 'miritini', 'changamwe',
                         'jomvu','ohuru','tudor','diani'],
     'Kisauni': ['bamburi','kisauni','mworoni','nyali','shanzu','bombolulu','mtopanga','mjambere','majaoni','manyani','magogoni','junda','mwakirunge','mshomoroni'],
     'Kilifi': ['kilfi','kilifi', 'mtwapa','takaungu', 'makongeni', 'mnarani', 'mnarani', 'office','g.e','ge','raibai','ribe'],
@@ -49,7 +116,9 @@ area_names = {
 
 
 
-area_types = {'urban': ['urban', 'nairobi', 'mombasa'], 'rural': ['rural', 'kakuma', 'kwale', 'kinango', 'kitui', 'nyanza'], 'periurban' : ['kilifi', 'periurban'],
+area_types = {'urban': ['urban', 'nairobi', 'mombasa'],
+              'rural': ['rural', 'kakuma', 'kwale', 'kinango', 'kitui', 'nyanza'],
+              'periurban' : ['kilifi', 'periurban'],
               'other' : ['other']}
 
 # process input params 1
@@ -78,7 +147,7 @@ private=True
 days_ago = 30
 days_ago_str = None#"Feb"
 start_date = None#Date().n_days_ago(days=350)
-end_date = None#Date().n_days_ago(days=306)
+end_date = Date().n_days_ago(days=1)
 
 if start_date == None:
     days_ago_str = "all_time"
@@ -137,7 +206,7 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,unique_txnDat
 
     headersUserPriv = ['id', 'start', 'first_name', 'last_name', 'phone', 'comm_tkn','old_POA_comm_tkn',
                        'old_POA_blockchain_address','xDAI_blockchain_address', 'gender', 'loc_conf', 'support_net', 'area_name','area_type', 'held_roles',
-                       'business_type', 'directory', 'final_bal']
+                       'business_type', 'directory','final_bal']
 
 
     headersUserPriv.extend(['ovol_in','ovol_out','otxns_in','otxns_out','ounique_in','ounique_out'])
@@ -221,12 +290,13 @@ def generate_user_and_transaction_data_github_csv(txnData,userData,unique_txnDat
                 #user_data1['location'] = user_info.get('location_path')
                 user_data1['loc_conf'] = user_info.get('loc_conf')
                 user_data1['support_net'] = user_info.get('support_net')
+                #user_data1['prod_cat'] = user_info['prod_cat']
                 user_data1['area_name'] = user_info.get('area_name')
                 user_data1['area_type'] = user_info.get('area_type')
                 user_data1['lat'] = user_info.get('location_lat')
                 user_data1['lon'] = user_info.get('location_lon')
                 user_data1['held_roles'] = user_info['_held_roles']
-                user_data1['business_type'] = user_info['_name']
+                user_data1['business_type'] = user_info['prod_cat']
                 user_data1['ovol_in'] = user_info['ovol_in']
                 user_data1['ovol_out'] = user_info['ovol_out']
                 user_data1['otxns_in'] = user_info['otxns_in']
@@ -723,8 +793,10 @@ def generate_location_transaction_data_svg(txnData, userData, unique_txnData, st
 
     #displayAreas= ['Mukuru Nairobi']
     #displayAreas = ['Kisauni','Mukuru Nairobi','Kinango Kwale','Nyanza','Kilifi']
-    #displayAreas = ['Total']
-    displayAreas = ['Kakuma']
+    #displayAreas = ['Kisauni','Mukuru Nairobi']
+    #displayAreas = ['Kisauni']
+    displayAreas = ['Total']
+    #displayAreas = ['Kakuma']
 
     ax0.set_title('Sarafu Transaction Volume')
     for tname in communities:
@@ -791,7 +863,6 @@ def generate_location_transaction_data_svg(txnData, userData, unique_txnData, st
     print("****num transactions svg saved to ", fileName)
 
 
-#return a list of every users transactions keyed by user
 def get_acct_loc(user_location):
     # get registered users
     user_counts = {}
@@ -829,6 +900,33 @@ def get_acct_loc(user_location):
         area_type = "other"
 
     return {"area_name":area_name,"area_type":area_type}
+
+
+def get_prod_category(user_prod):
+    # get registered users
+    user_counts = {}
+    prod_name = user_prod
+    prod_cat = ''
+
+    if prod_name != None:
+        prod_name = user_prod.lower().strip()
+        if prod_name == '':
+            prod_name = 'other'
+    else:
+        prod_name = 'other'
+
+    found = False
+    for cat in product_categories.keys():
+        if found == False:
+            for sub_name in product_categories[cat]:
+                if sub_name in prod_name:
+                    prod_cat = cat
+                    found = True
+
+    if found == False:
+        prod_cat = "other"
+
+    return {"prod_cat":prod_cat}
 
 #return a list of every users transactions keyed by user
 def get_txns_acct_txns(conn, eth_conn,start_date=None,end_date=None):
@@ -1145,7 +1243,7 @@ def get_user_info(conn,private=False):
     public_userDBheaders = ['id','business_usage_id', '_location', '_held_roles',
                      'created', 'default_currency','primary_blockchain_address']
 #'_location',
-    public_custUserDBheaders = ['gender','GE_wallet_address']
+    public_custUserDBheaders = ['bio','gender','GE_wallet_address']
 
 
     userDBheaders =  public_userDBheaders
@@ -1340,12 +1438,30 @@ for user in userData.keys():
     sseenAllUsers = []
 
     location_name = userData[user]['_location']
+
+
+
     if location_name != None:
         location_name = location_name.lower()
     else:
         location_name = 'other'
 
     locFinder = get_acct_loc(location_name)
+
+    #old_cat = userData[user].get('_name', '')
+
+
+    user_prod = userData[user].get('bio', '').strip('"')
+    #print("bio: ",user_prod)
+    if(userData[user]['_held_roles'] == 'ADMIN'):
+        user_prod = "system"
+
+    prod_cat_finder = get_prod_category(user_prod)
+
+    prod_cat = prod_cat_finder["prod_cat"]
+
+    #if prod_cat == None:
+    #    prod_cat = old_cat
 
     area_name = locFinder["area_name"]
     area_type = locFinder["area_type"]
@@ -1412,13 +1528,13 @@ for user in userData.keys():
     txData = {'ovol_in':volume_in, 'ovol_out':volume_out,'otxns_in':txns_in,'otxns_out':txns_out,
               'ounique_in':unique_txns_in, 'ounique_out':unique_txns_out, 'svol_in':svolume_in, 'svol_out':svolume_out,'stxns_in':stxns_in,'stxns_out':stxns_out,
               'sunique_in':sunique_txns_in,'sunique_out':sunique_txns_out,'sunique_all':sunique_txns_all,'sunique_out_group':sunique_txns_out_group,'sunique_in_group':sunique_txns_in_group,'sunique_in_at':sunique_txns_in_atleast,
-              'sunique_out_at':sunique_txns_out_atleast,'sunique_out_at_group':sunique_txns_out_atleast_group,'area_name':area_name,'area_type':area_type}
+              'sunique_out_at':sunique_txns_out_atleast,'sunique_out_at_group':sunique_txns_out_atleast_group,'area_name':area_name,'area_type':area_type,'prod_cat':prod_cat}
 
     uDict = userData[user]
     uDict.update(txData)
     userData[user]=uDict
 
-userHeaders.extend(['area_name','area_type','ovol_in','ovol_out','otxns_in','otxns_out','ounique_in','ounique_out'])
+userHeaders.extend(['prod_cat','area_name','area_type','ovol_in','ovol_out','otxns_in','otxns_out','ounique_in','ounique_out'])
 userHeaders.extend(['svol_in','svol_out','stxns_in','stxns_out','sunique_in','sunique_out','sunique_all'])
 
 print("..")
@@ -1854,7 +1970,7 @@ airtime_reward = []
 
 if True:
 
-    newHeaders = ['id', 'first_name', 'last_name', '_phone', 'bio', '_name', 'gender', 'created', '_location', 'loc_conf', 'support_net', 'trade_bal', 'area_name','area_type','_held_roles',
+    newHeaders = ['id', 'first_name', 'last_name', '_phone', 'bio', '_name', 'prod_cat', 'gender', 'created', '_location', 'loc_conf', 'support_net', 'trade_bal', 'area_name','area_type','_held_roles',
                   'preferred_language', 'is_market_enabled', 'failed_pin_attempts', '_balance_wei', 'ovol_in', 'ovol_out', 'otxns_in',
                   'otxns_out', 'ounique_in', 'ounique_out', 'svol_in', 'svol_out',
                   'stxns_in', 'stxns_out', 'sunique_in', 'sunique_out','sunique_all', 'cluster_coef', 'punique_x_clustering', 'user_reward', 'punique_group_x_clustering', 'group_reward', 'last_trade_out',
