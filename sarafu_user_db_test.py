@@ -103,9 +103,11 @@ area_names = {
                 'congo', 'kawangware','kwangware', 'donholm', 'dagoreti','dandora','kabete', 'sinai', 'donhom','donholm', 'huruma', 'kitengela', 'makadara',',mlolongo','kenyatta','mlolongo',
                 'tassia','tasia','gatina', '56', 'industrial', 'kariobangi','kasarani', 'kayole', 'mathare', 'pipe', 'juja', 'uchumi','jogoo', 'umoja','thika', 'kikuyu','stadium','buru buru', 'ngong','starehe',
                 'mwiki', 'fuata', 'kware', 'kabiro', 'embakassi','embakasi', 'kmoja', 'east', 'githurai', 'landi', 'langata','limuru','mathere','dagoretti','kirembe','muugano','mwiki','toi market'],
-    'Misc Mombasa': ['mombasa', 'likoni', 'bangla', 'bangladesh','kizingo','old town','makupa','mvita','ngombeni','ngómbeni', 'ombeni', 'magongo', 'miritini', 'changamwe',
-                        'jomvu','ohuru','tudor','diani'],
-    'Kisauni': ['bamburi','kisauni','mworoni','nyali','shanzu','bombolulu','mtopanga','mjambere','majaoni','manyani','magogoni','junda','mwakirunge','mshomoroni'],
+    'Kisauni': ['bamburi','mnyuchi','kisauni','kasauni','mworoni','nyali','falcon','shanzu','bombolulu','kandongo','kadongo','mshomoro','mtopanga',
+                'mjambere','majaoni','manyani','magogoni','magongoni','junda','mwakirunge','mshomoroni','mjinga','mlaleo','utange'],
+    'Misc Mombasa': ['mombasa', 'likoni', 'bangla', 'bangladesh', 'kizingo', 'old town', 'makupa', 'mvita', 'ngombeni',
+                     'ngómbeni', 'ombeni', 'magongo', 'miritini', 'changamwe',
+                     'jomvu', 'ohuru', 'tudor', 'diani'],
     'Kilifi': ['kilfi','kilifi', 'mtwapa','takaungu', 'makongeni', 'mnarani', 'mnarani', 'office','g.e','ge','raibai','ribe'],
     'Kakuma': ['kakuma'],
     'Kitui': ['kitui','mwingi'],
@@ -794,8 +796,8 @@ def generate_location_transaction_data_svg(txnData, userData, unique_txnData, st
     #displayAreas= ['Mukuru Nairobi']
     #displayAreas = ['Kisauni','Mukuru Nairobi','Kinango Kwale','Nyanza','Kilifi']
     #displayAreas = ['Kisauni','Mukuru Nairobi']
-    #displayAreas = ['Kisauni']
-    displayAreas = ['Total']
+    displayAreas = ['Kisauni']
+    #displayAreas = ['Total']
     #displayAreas = ['Kakuma']
 
     ax0.set_title('Sarafu Transaction Volume')
