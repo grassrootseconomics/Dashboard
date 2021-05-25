@@ -103,7 +103,7 @@ area_names = {
                 'congo', 'kawangware','kwangware', 'donholm', 'dagoreti','dandora','kabete', 'sinai', 'donhom','donholm', 'huruma', 'kitengela', 'makadara',',mlolongo','kenyatta','mlolongo',
                 'tassia','tasia','gatina', '56', 'industrial', 'kariobangi','kasarani', 'kayole', 'mathare', 'pipe', 'juja', 'uchumi','jogoo', 'umoja','thika', 'kikuyu','stadium','buru buru', 'ngong','starehe',
                 'mwiki', 'fuata', 'kware', 'kabiro', 'embakassi','embakasi', 'kmoja', 'east', 'githurai', 'landi', 'langata','limuru','mathere','dagoretti','kirembe','muugano','mwiki','toi market'],
-    'Kisauni': ['bamburi','mnyuchi','kisauni','kasauni','mworoni','nyali','falcon','shanzu','bombolulu','kandongo','kadongo','mshomoro','mtopanga',
+    'Kisauni Mombasa': ['bamburi','mnyuchi','kisauni','kasauni','mworoni','nyali','falcon','shanzu','bombolulu','kandongo','kadongo','mshomoro','mtopanga',
                 'mjambere','majaoni','manyani','magogoni','magongoni','junda','mwakirunge','mshomoroni','mjinga','mlaleo','utange'],
     'Misc Mombasa': ['mombasa', 'likoni', 'bangla', 'bangladesh', 'kizingo', 'old town', 'makupa', 'mvita', 'ngombeni',
                      'ngómbeni', 'ombeni', 'magongo', 'miritini', 'changamwe',
@@ -118,7 +118,7 @@ area_names = {
 
 
 
-area_types = {'urban': ['urban', 'nairobi', 'mombasa'],
+area_types = {'urban': ['urban', 'nairobi', 'mombasa','kisauni'],
               'rural': ['rural', 'kakuma', 'kwale', 'kinango', 'kitui', 'nyanza'],
               'periurban' : ['kilifi', 'periurban'],
               'other' : ['other']}
@@ -796,8 +796,8 @@ def generate_location_transaction_data_svg(txnData, userData, unique_txnData, st
     #displayAreas= ['Mukuru Nairobi']
     #displayAreas = ['Kisauni','Mukuru Nairobi','Kinango Kwale','Nyanza','Kilifi']
     #displayAreas = ['Kisauni','Mukuru Nairobi']
-    displayAreas = ['Kisauni']
-    #displayAreas = ['Total']
+    #displayAreas = ['Kisauni']
+    displayAreas = ['Total']
     #displayAreas = ['Kakuma']
 
     ax0.set_title('Sarafu Transaction Volume')
