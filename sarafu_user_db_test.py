@@ -37,7 +37,7 @@ product_categories = {
     'environment': ['conservation','toilet','choo','garbage','fagio','waste','tree','taka','scrap','cleaning',
                     'gardener','rubbish','usafi','mazingira','miti','trash','cleaner','plastic','collection',
                     'seedling','seedlings','recycling'],
-    'farming': ['farm','farmer','farming','mkulima','kulima','ukulima','wakulima','jembe','shamba'],
+    'farming': ['farm','farmer','farming','mkulima','kulima','ukulima','wakulima','jembe','shamba','kupanda','kufuga'],
     'labour': ['artist','agent','guard','askari','accountant','baker','beadwork','beauty','business','barber','casual',
                'electrian', 'caretaker','car wash','capenter','construction','chef','catering','cobler','cobbler',
                'carwash','dhobi','landlord','design','carpenter','fundi','hawking','hawker','househelp','hsehelp',
@@ -109,7 +109,7 @@ area_names = {
                      'ngómbeni', 'ombeni', 'magongo', 'miritini', 'changamwe',
                      'jomvu', 'ohuru', 'tudor', 'diani'],
     'Kilifi': ['kilfi','kilifi', 'mtwapa','takaungu', 'makongeni', 'mnarani', 'mnarani', 'office','g.e','ge','raibai','ribe'],
-    'Kakuma': ['kakuma'],
+    'Turkana': ['turkana','kakuma'],
     'Kitui': ['kitui','mwingi'],
     'Nyanza': ['busia', 'nyalgunga', 'mbita','siaya', 'kisumu', 'nyalenda','hawinga', 'rangala','uyoma', 'mumias','homabay','homaboy','migori','kusumu'],
     'Misc Rural Counties': ['makueni', 'meru', 'kisii', 'bomet', 'machakos', 'bungoma','eldoret','kakamega','kericho','kajiado','nandi','nyeri','wote','kiambu','mwea','nakuru','narok'],
@@ -119,7 +119,7 @@ area_names = {
 
 
 area_types = {'urban': ['urban', 'nairobi', 'mombasa','kisauni'],
-              'rural': ['rural', 'kakuma', 'kwale', 'kinango', 'kitui', 'nyanza'],
+              'rural': ['rural', 'turkana', 'kwale', 'kinango', 'kitui', 'nyanza'],
               'periurban' : ['kilifi', 'periurban'],
               'other' : ['other']}
 
@@ -796,8 +796,8 @@ def generate_location_transaction_data_svg(txnData, userData, unique_txnData, st
     #displayAreas= ['Mukuru Nairobi']
     #displayAreas = ['Kisauni','Mukuru Nairobi','Kinango Kwale','Nyanza','Kilifi']
     #displayAreas = ['Kisauni','Mukuru Nairobi']
-    #displayAreas = ['Kisauni']
-    displayAreas = ['Total']
+    displayAreas = ['Kisauni Mombasa']
+    #displayAreas = ['Total']
     #displayAreas = ['Kakuma']
 
     ax0.set_title('Sarafu Transaction Volume')
@@ -1964,7 +1964,7 @@ userHeaders.extend(['confidence'])
 '''
 
 generate_user_and_transaction_data_github_csv(txnData,userData,unique_txnData,start_date,end_date,days_ago_str,private=private)
-stff_list = []
+stff_list = ['254718916920']
 
 stff_hash = {}
 stff_bal_hash = {}
